@@ -36,25 +36,25 @@ Instala las dependencias con `pip install -r requirements.txt`.
 
 Configura la base de datos en `settings.py` reemplazando la sección `DATABASES` con:
 
-DATABASES = {
+    DATABASES = {
 
-'default': {
+    'default': {
 
-'ENGINE': 'django.db.backends.postgresql',
+    'ENGINE': 'django.db.backends.postgresql',
 
-'NAME': 'benune_db',
+    'NAME': 'benune_db',
 
-'USER': 'postgres',
+    'USER': 'postgres',
 
-'PASSWORD': '1234',
+    'PASSWORD': '1234',
 
-'HOST': 'localhost',
+    'HOST': 'localhost',
 
-'PORT': '5432',
+    'PORT': '5432',
+
+        }
 
     }
-
-}
 
 
 Aplica las migraciones con `python manage.py migrate`.
