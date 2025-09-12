@@ -4,7 +4,10 @@ Este es un proyecto Django llamado **"benune"**. A continuación, se detallan la
 
 ## Prerrequisitos
 
-Antes de comenzar, asegúrate de tener instalado Python 3.8 o superior, Git y PostgreSQL (incluyendo pgAdmin).
+Antes de comenzar, asegúrate de tener instalado 
+- Python 3.8 o superior, 
+- Git 
+- PostgreSQL (incluyendo pgAdmin).
 
 ## Instalación de PostgreSQL y pgAdmin
 
@@ -26,6 +29,8 @@ Crea un entorno virtual con `python -m venv venv`.
 Activa el entorno virtual:
 - En Windows usa `venv\Scripts\activate`.
 - En macOS/Linux usa `source venv/bin/activate`.
+
+Instala django con `pip install django`.
 
 Instala las dependencias con `pip install -r requirements.txt`.
 
