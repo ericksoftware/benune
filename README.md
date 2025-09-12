@@ -19,7 +19,7 @@ Una vez instalado, abre pgAdmin y crea una nueva base de datos llamada `benune_d
 
 ## Configuración del proyecto
 
-Clona el repositorio usando: `git clone <url-de-tu-repositorio>` y entra al directorio con `cd benune`.
+Clona el repositorio usando: `git clone https://github.com/ericksoftware/benune.git` y entra al directorio con `cd benune`.
 
 Crea un entorno virtual con `python -m venv venv`.
 
@@ -32,14 +32,23 @@ Instala las dependencias con `pip install -r requirements.txt`.
 Configura la base de datos en `settings.py` reemplazando la sección `DATABASES` con:
 
 DATABASES = {
+
 'default': {
+
 'ENGINE': 'django.db.backends.postgresql',
+
 'NAME': 'benune_db',
+
 'USER': 'postgres',
+
 'PASSWORD': '1234',
+
 'HOST': 'localhost',
+
 'PORT': '5432',
+
 }
+
 }
 
 
