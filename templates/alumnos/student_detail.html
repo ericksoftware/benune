@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Detalle de Alumno - BENUNE{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'student_list' %}">Alumnos</a></li>
+                    <li class="breadcrumb-item active">Detalle</li>
+                </ol>
+            </nav>
+            
+            <h1 class="h2 text-primary-custom">Detalle del Alumno</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary-custom text-white">
+                    <h5 class="card-title mb-0">Información Personal</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Nombre:</strong> {{ alumno.nombre_completo }}</p>
+                    <p><strong>CURP:</strong> {{ alumno.curp }}</p>
+                    <p><strong>Fecha de Nacimiento:</strong> {{ alumno.fecha_nacimiento }}</p>
+                    <p><strong>Sexo:</strong> {{ alumno.get_sexo_display }}</p>
+                    <p><strong>Lugar de Nacimiento:</strong> {{ alumno.municipio_estado_nacimiento }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary-custom text-white">
+                    <h5 class="card-title mb-0">Información Académica</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Matrícula:</strong> {{ alumno.matricula|default:"Pendiente" }}</p>
+                    <p><strong>Licenciatura:</strong> {{ alumno.licenciatura }}</p>
+                    <p><strong>Semestre:</strong> {{ alumno.semestre_actual }}</p>
+                    <p><strong>Turno:</strong> {{ alumno.get_turno_display }}</p>
+                    <p><strong>Promedio:</strong> {{ alumno.promedio_prepa|default:"N/A" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary-custom text-white">
+                    <h5 class="card-title mb-0">Información de Contacto</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Institución de Procedencia:</strong> {{ alumno.institucion_procedencia }}</p>
+                    <p><strong>Correo:</strong> {{ alumno.correo_particular|default:"N/A" }}</p>
+                    <p><strong>Teléfono:</strong> {{ alumno.numero_celular|default:"N/A" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <a href="{% url 'student_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Volver a la lista
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

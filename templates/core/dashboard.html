@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard - BENUNE{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold text-primary-custom">Panel de Control</h1>
+            <p class="lead">Bienvenido/a, {{ user.get_full_name|default:user.username }}</p>
+            <p class="badge bg-{% if user.tipo_usuario == 'control_escolar' %}primary-custom{% elif user.tipo_usuario == 'docente' %}info{% elif user.tipo_usuario == 'directivo' %}warning{% else %}secondary{% endif %}">
+                {{ user.get_tipo_usuario_display }}
+            </p>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <!-- Módulo de Alumnos -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card card-module h-100 text-center">
+                <div class="card-body p-4">
+                    <div class="module-icon text-primary-custom">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="h4 card-title text-primary-custom">Gestión de Alumnos</h3>
+                    <p class="card-text">Consulta la información de alumnos del sistema.</p>
+                    <a href="{% url 'student_list' %}" class="btn btn-primary-custom mt-3">
+                        <i class="fas fa-arrow-right me-2"></i>Ver Alumnos
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Módulo de Constancias -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card card-module h-100 text-center">
+                <div class="card-body p-4">
+                    <div class="module-icon text-secondary-custom">
+                        <i class="fas fa-file-certificate"></i>
+                    </div>
+                    <h3 class="h4 card-title text-secondary-custom">Constancias de Estudios</h3>
+                    <p class="card-text">{% if user.tipo_usuario == 'control_escolar' %}Genera y gestiona{% else %}Consulta{% endif %} constancias de estudios.</p>
+                    
+                    {% if user.tipo_usuario == 'control_escolar' %}
+                    <a href="{% url 'certificate_list' %}" class="btn btn-secondary-custom mt-3">
+                        <i class="fas fa-arrow-right me-2"></i>Gestionar Constancias
+                    </a>
+                    {% else %}
+                    <span class="badge bg-secondary mt-3">Solo Control Escolar</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Módulo de Actas de Evaluación -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card card-module h-100 text-center">
+                <div class="card-body p-4">
+                    <div class="module-icon text-info">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <h3 class="h4 card-title text-info">Actas de Evaluación</h3>
+                    <p class="card-text">{% if user.tipo_usuario == 'control_escolar' %}Genera y gestiona{% else %}Consulta{% endif %} actas de evaluación.</p>
+                    
+                    {% if user.tipo_usuario == 'control_escolar' %}
+                    <a href="{% url 'grade_list' %}" class="btn btn-info text-white mt-3">
+                        <i class="fas fa-arrow-right me-2"></i>Gestionar Actas
+                    </a>
+                    {% else %}
+                    <span class="badge bg-secondary mt-3">Solo Control Escolar</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

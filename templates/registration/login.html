@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Iniciar Sesión - BENUNE{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <h2><i class="fas fa-graduation-cap me-2"></i>BENUNE</h2>
+            <p class="mb-0">Sistema de Gestión Administrativa</p>
+        </div>
+        
+        <div class="login-body">
+            <h4 class="text-center mb-4">Iniciar Sesión</h4>
+            
+            {% if form.errors %}
+            <div class="alert alert-danger" role="alert">
+                Correo electrónico o contraseña incorrectos. Por favor, inténtelo de nuevo.
+            </div>
+            {% endif %}
+            
+            <form method="post" action="{% url 'login' %}">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="username" class="form-label">Correo Institucional *</label>
+                    <input type="email" name="username" class="form-control" id="username" 
+                           placeholder="usuario@institucion.edu.mx" required autofocus>
+                    <div class="form-text">Usa tu correo institucional para iniciar sesión</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="password" class="form-label">Contraseña *</label>
+                    <input type="password" name="password" class="form-control" id="password" 
+                           placeholder="Ingresa tu contraseña" required>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary-custom btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>Ingresar
+                    </button>
+                </div>
+                
+                <input type="hidden" name="next" value="{{ next }}">
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

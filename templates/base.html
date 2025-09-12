@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BENUNE - Sistema de Gestión{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --color-primary: #831012;
+            --color-secondary: #085a2a;
+            --color-light: #f8f9fa;
+            --color-dark: #343a40;
+        }
+        
+        .bg-primary-custom {
+            background-color: var(--color-primary) !important;
+        }
+        
+        .bg-secondary-custom {
+            background-color: var(--color-secondary) !important;
+        }
+        
+        .btn-primary-custom {
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+            color: white;
+        }
+        
+        .btn-primary-custom:hover {
+            background-color: #6a0d0f;
+            border-color: #6a0d0f;
+            color: white;
+        }
+        
+        .btn-secondary-custom {
+            background-color: var(--color-secondary);
+            border-color: var(--color-secondary);
+            color: white;
+        }
+        
+        .btn-secondary-custom:hover {
+            background-color: #064a22;
+            border-color: #064a22;
+            color: white;
+        }
+        
+        .text-primary-custom {
+            color: var(--color-primary) !important;
+        }
+        
+        .text-secondary-custom {
+            color: var(--color-secondary) !important;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .card-module {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .card-module:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .module-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .login-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--color-primary) 0%, #6a0d0f 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-card {
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .login-header {
+            background-color: var(--color-primary);
+            color: white;
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+        
+        .login-body {
+            padding: 2rem;
+            background-color: white;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <!-- Navbar para usuarios autenticados -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary-custom">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'dashboard' %}">
+                <i class="fas fa-graduation-cap me-2"></i>BENUNE
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'dashboard' %}">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'student_list' %}">Alumnos</a>
+                    </li>
+                    {% if user.tipo_usuario == 'control_escolar' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'certificate_list' %}">Constancias</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'grade_list' %}">Evaluaciones</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i> {{ user.get_full_name|default:user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><span class="dropdown-item-text">
+                                <i class="fas fa-user-tag me-2"></i>{{ user.get_tipo_usuario_display }}
+                            </span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" action="{% url 'logout' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Contenido principal -->
+    <main>
+        <!-- Mensajes -->
+        {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    {% if user.is_authenticated %}
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>BENEMÉRITA ESCUELA NORMAL URBANA NOCTURNA DEL ESTADO</h5>
+                    <p>Ing. José G. Valenzuela</p>
+                    <p>AV. JUAN ESCUTIA Y RIO SAN LORENZO S/N COL. PRO-HOGAR. MEXICALI, B.C.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>Sistema de Gestión Administrativa</p>
+                    <p>© {% now "Y" %} - Todos los derechos reservados</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    {% endif %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

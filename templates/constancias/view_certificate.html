@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Ver Constancia - BENUNE{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'certificate_list' %}">Constancias</a></li>
+                    <li class="breadcrumb-item active">Ver</li>
+                </ol>
+            </nav>
+            
+            <h1 class="h2 text-primary-custom">Constancia de Estudios</h1>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <!-- Vista previa de la constancia -->
+            <div class="constancia-preview border p-4 mb-4">
+                <div class="text-center mb-4">
+                    <h2 class="text-primary-custom">BENEMÉRITA ESCUELA NORMAL URBANA NOCTURNA DEL ESTADO</h2>
+                    <h3 class="text-secondary-custom">ING. JOSÉ G. VALENZUELA</h3>
+                    <p class="mb-0">Clave: 02ENL0004Y</p>
+                </div>
+                
+                <div class="text-center mb-4">
+                    <h4 class="text-dark">CONSTANCIA DE ESTUDIOS</h4>
+                </div>
+                
+                <div class="constancia-content">
+                    <p class="text-justify">
+                        Quien suscribe Dr(a). Liuba Abiyova Téllez Osuna Directora de la BENEMÉRITA
+                        ESCUELA NORMAL URBANA NOCTURNA DEL ESTADO. ING. JOSÉ G. VALENZUELA
+                        con clave <strong>02ENL0004Y</strong>, hace constar que según documentos que se
+                        encuentran en los archivos de esta Institución el (la) C. 
+                        <strong>NOMBRE_DEL_ALUMNO</strong> con número de matrícula 
+                        <strong>MATRICULA</strong> y CURP: <strong>CURP</strong>,
+                        es alumno(a) regular y se encuentra inscrito(a) en el 
+                        <strong>SEMESTRE</strong> semestre turno <strong>TURNO</strong> de la
+                        <strong>LICENCIATURA</strong> plan de estudios <strong>PLAN</strong>
+                        en el periodo que comprende del <strong>FECHA_INICIO</strong> al 
+                        <strong>FECHA_FIN</strong>.
+                    </p>
+                    
+                    <p class="text-justify">
+                        Se otorga la presente constancia para los fines legales que a la parte interesada
+                        convengan en la Ciudad de Mexicali, Baja California, México, a los 
+                        <strong>FECHA_EMISION</strong>.
+                    </p>
+                </div>
+                
+                <div class="row mt-5">
+                    <div class="col-md-6 text-center">
+                        <p>_________________________</p>
+                        <p class="fw-bold">Encargado de Subdirección Académica</p>
+                        <p>BENUNE</p>
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <p>_________________________</p>
+                        <p class="fw-bold">Dr(a). Liuba Abiyova Téllez Osuna</p>
+                        <p>Directora de BENUNE</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{% url 'certificate_list' %}" class="btn btn-secondary me-md-2">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </a>
+                <a href="#" class="btn btn-primary-custom me-md-2">
+                    <i class="fas fa-download me-2"></i>Descargar PDF
+                </a>
+                <a href="#" class="btn btn-success">
+                    <i class="fas fa-print me-2"></i>Imprimir
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.constancia-preview {
+    background-color: #f8f9fa;
+    font-family: 'Times New Roman', serif;
+    line-height: 1.6;
+}
+</style>
+{% endblock %}
