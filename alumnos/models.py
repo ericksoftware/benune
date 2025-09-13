@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from core.fields import EncryptedCharField, EncryptedEmailField, EncryptedTextField
 
 class Alumno(models.Model):
     SEXO_CHOICES = [
@@ -17,16 +18,18 @@ class Alumno(models.Model):
         ('INCLUSION_EDUCATIVA', 'Licenciatura en Inclusión Educativa'),
     ]
     
-    # Información personal
-    curp = models.CharField(max_length=18, unique=True, verbose_name='CURP')
-    nombre = models.CharField(max_length=100)
-    apellido_paterno = models.CharField(max_length=100)
-    apellido_materno = models.CharField(max_length=100)
-    fecha_nacimiento = models.DateField()
-    sexo = models.CharField(max_length=10, choices=SEXO_CHOICES)
-    municipio_estado_nacimiento = models.CharField(max_length=100)
+    # Información personal (CIFRADA)
+    curp = EncryptedCharField(max_length=255, unique=True, verbose_name='CURP')  # ⬅ 18 → 255
+    nombre = EncryptedCharField(max_length=255)  # ⬅ 100 → 255
+    apellido_paterno = EncryptedCharField(max_length=255)  # ⬅ 100 → 255
+    apellido_materno = EncryptedCharField(max_length=255)  # ⬅ 100 → 255
+    municipio_estado_nacimiento = EncryptedCharField(max_length=255)  # ⬅ 100 → 255
     
-    # Información académica
+    # Información personal (NO CIFRADA - menos sensible)
+    sexo = models.CharField(max_length=10, choices=SEXO_CHOICES)
+    fecha_nacimiento = models.DateField()
+    
+    # Información académica (NO CIFRADA - datos públicos)
     matricula = models.CharField(max_length=20, unique=True, blank=True, null=True)
     licenciatura = models.CharField(max_length=50, choices=LICENCIATURA_CHOICES)
     semestre_actual = models.PositiveIntegerField(
@@ -35,12 +38,12 @@ class Alumno(models.Model):
     turno = models.CharField(max_length=20, choices=TURNO_CHOICES)
     promedio_prepa = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
     
-    # Información de contacto
-    institucion_procedencia = models.CharField(max_length=200)
-    correo_particular = models.EmailField(blank=True, null=True)
-    numero_celular = models.CharField(max_length=15, blank=True, null=True)
+    # Información de contacto (CIFRADA)
+    institucion_procedencia = EncryptedCharField(max_length=500)  # ⬅ 200 → 500
+    correo_particular = EncryptedEmailField(blank=True, null=True)  # ✅ 254 is good (kept from parent)
+    numero_celular = EncryptedCharField(max_length=255, blank=True, null=True)  # ⬅ 15 → 255
     
-    # Fechas importantes
+    # Metadatos (NO CIFRADOS)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
     

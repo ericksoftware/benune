@@ -1,0 +1,179 @@
+Diagrama de Estructura del Proyecto BENUNE
+
+BENUNE_SISTEMA/
+├── 📁 config/                          # Configuración principal del proyecto Django
+│   ├── __init__.py
+│   ├── settings.py                    # Configuración: BD, apps, middleware, etc.
+│   ├── urls.py                        # URLs principales del proyecto
+│   └── wsgi.py
+│
+├── 📁 usuarios/                       # App de gestión de usuarios
+│   ├── __init__.py
+│   ├── admin.py                       # Configuración admin para usuarios
+│   ├── apps.py
+│   ├── models.py                      # Modelo Usuario personalizado
+│   ├── backends.py                    # Backend de autenticación por email
+│   └── migrations/                    # Migraciones de la app usuarios
+│
+├── 📁 alumnos/                        # App de gestión de alumnos
+│   ├── __init__.py
+│   ├── admin.py                       # Configuración admin para alumnos
+│   ├── apps.py
+│   ├── models.py                      # Modelo Alumno
+│   ├── views.py                       # Vistas: lista y detalle de alumnos
+│   ├── urls.py                        # URLs de la app alumnos
+│   └── migrations/                    # Migraciones de la app alumnos
+│
+├── 📁 constancias/                    # App de gestión de constancias
+│   ├── __init__.py
+│   ├── admin.py                       # Configuración admin para constancias
+│   ├── apps.py
+│   ├── models.py                      # Modelo Constancia
+│   ├── views.py                       # Vistas: generar, ver, descargar constancias
+│   ├── urls.py                        # URLs de la app constancias
+│   └── migrations/                    # Migraciones de la app constancias
+│
+├── 📁 evaluaciones/                   # App de gestión de evaluaciones
+│   ├── __init__.py
+│   ├── admin.py                       # Configuración admin para evaluaciones
+│   ├── apps.py
+│   ├── models.py                      # Modelos: Materia, Calificacion, ActaEvaluacion
+│   ├── views.py                       # Vistas: calificaciones, actas, importación
+│   ├── urls.py                        # URLs de la app evaluaciones
+│   └── migrations/                    # Migraciones de la app evaluaciones
+│
+├── 📁 core/                           # App core (funcionalidades centrales)
+│   ├── __init__.py
+│   ├── apps.py
+│   ├── views.py                       # Vistas: dashboard, redirecciones
+│   ├── urls.py                        # URLs del core
+│   ├── decorators.py                  # Decoradores de permisos
+│   ├── encryption.py                  
+│   ├── fields.py                  
+│   └── migrations/                    # Migraciones del core (si las hay)
+│
+├── 📁 templates/                      # Templates HTML
+│   ├── base.html                      # Plantilla base principal
+│   ├── registration/
+│   │   └── login.html                 # Template de login
+│   ├── core/
+│   │   └── dashboard.html             # Dashboard principal
+│   ├── alumnos/
+│   │   ├── student_list.html          # Lista de alumnos
+│   │   └── student_detail.html        # Detalle de alumno
+│   ├── constancias/
+│   │   ├── certificate_list.html      # Lista de constancias
+│   │   ├── generate_certificate.html  # Generar constancia
+│   │   ├── view_certificate.html      # Ver constancia
+│   │   └── certificate_template.html  # Template PDF para constancias
+│   └── evaluaciones/
+│       ├── grade_list.html            # Lista de calificaciones
+│       ├── import_grades.html         # Importar calificaciones
+│       ├── generate_transcript.html   # Generar acta
+│       ├── view_transcript.html       # Ver acta
+│       └── transcript_template.html   # Template PDF para actas
+│
+├── 📁 static/                         # Archivos estáticos
+│   ├── css/
+│   │   └── styles.css                 # Estilos personalizados
+│   ├── js/
+│   │   └── scripts.js                 # JavaScript personalizado
+│   └── img/                           # Imágenes
+│
+├── 📁 media/                          # Archivos multimedia (subidos por usuarios)
+│   ├── constancias/                   # Constancias PDF generadas
+│   └── actas/                         # Actas PDF generadas
+│
+├── 📁 venv/                           # Entorno virtual de Python
+├── .env                               # Variables de entorno
+├── requirements.txt                   # Dependencias del proyecto
+├── manage.py                          # Script de gestión de Django
+├── create_test_users.py               # Script para crear usuarios de prueba
+├── create_test_alumnos.py             # Script para crear alumnos de prueba
+├── create_test_materias.py            # Script para crear materias de prueba
+└── README.md                          # Documentación del proyecto
+
+
+
+
+Diagrama de Flujo de Autenticación
+
+Usuario → Login Page → EmailBackend → Verificación → 
+         ↓                           ↓
+         Credenciales incorrectas   Credenciales correctas
+         ↓                           ↓
+     Mensaje error                Redirección a Dashboard
+
+
+
+
+Diagrama de Relaciones de Base de Datos
+
+Usuario (AbstractUser)
+  ├── tipo_usuario (choices)
+  ├── telefono
+  └── fecha_actualizacion
+
+Alumno
+  ├── curp (único)
+  ├── nombre, apellidos
+  ├── información académica
+  ├── información contacto
+  └── fechas importantes
+
+Constancia
+  ├── alumno (ForeignKey → Alumno)
+  ├── tipo_constancia
+  ├── archivo_pdf
+  └── fechas
+
+Materia
+  ├── nombre, clave
+  ├── licenciatura, semestre
+  └── créditos
+
+Calificacion
+  ├── alumno (ForeignKey → Alumno)
+  ├── materia (ForeignKey → Materia)
+  ├── calificación
+  └── periodo
+
+ActaEvaluacion
+  ├── licenciatura, semestre, grupo
+  ├── materia (ForeignKey → Materia)
+  ├── archivo_pdf
+  └── estado
+
+
+
+
+Diagrama de Permisos por Rol
+
+                +-------------------+
+                |   USUARIO AUTH    |
+                +-------------------+
+                         |
+         +---------------+---------------+
+         |               |               |
++----------------+ +----------------+ +----------------+
+| CONTROL ESCOLAR | |    DOCENTE    | |   DIRECTIVO    |
++----------------+ +----------------+ +----------------+
+| ✓ Ver todo      | ✓ Ver alumnos   | ✓ Ver alumnos   |
+| ✓ Generar const | ✓ Ver calif     | ✓ Ver calif     |
+| ✓ Generar actas | ✗ Generar const | ✗ Generar const |
+| ✓ Importar datos| ✗ Generar actas | ✗ Generar actas |
++----------------+ +----------------+ +----------------+
+
+
+
+
+Flujo de Generación de Constancias
+
+1. Control escolar selecciona alumno
+2. Completa datos de constancia
+3. Sistema genera PDF con template
+4. PDF se guarda en media/constancias/
+5. Constancia se registra en BD
+6. Usuario puede ver/descargar PDF
+
+
