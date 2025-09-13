@@ -18,6 +18,25 @@
             --color-light: #f8f9fa;
             --color-dark: #343a40;
         }
+
+            html, body {
+            height: 100%;
+            margin: 0;
+        }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        main {
+            flex: 1 0 auto;
+        }
+        
+        footer {
+            flex-shrink: 0;
+        }
         
         .bg-primary-custom {
             background-color: var(--color-primary) !important;

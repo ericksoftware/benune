@@ -6,13 +6,13 @@ class EmailBackend(ModelBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
         UserModel = get_user_model()
         try:
-            # Buscar usuario por email (username es realmente el email)
-            user = UserModel.objects.get(Q(email__iexact=username) | Q(username__iexact=username))
+            # Buscar usuario por email
+            user = UserModel.objects.get(email__iexact=username)
         except UserModel.DoesNotExist:
             return None
         except UserModel.MultipleObjectsReturned:
             # Si hay múltiples usuarios con el mismo email, toma el primero
-            user = UserModel.objects.filter(Q(email__iexact=username) | Q(username__iexact=username)).first()
+            user = UserModel.objects.filter(email__iexact=username).first()
         
         if user and user.check_password(password):
             return user

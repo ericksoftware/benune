@@ -11,16 +11,39 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
 from pathlib import Path
+from cryptography.fernet import Fernet, InvalidToken
+from dotenv import load_dotenv
 
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY')
+
+# Validate encryption key
+if not ENCRYPTION_KEY:
+    print("❌ ADVERTENCIA: ENCRYPTION_KEY no encontrada en variables de entorno")
+    print("❌ Generando clave temporal para desarrollo - NO USAR EN PRODUCCIÓN")
+    ENCRYPTION_KEY = Fernet.generate_key().decode()
+    print(f"🔑 Clave temporal: {ENCRYPTION_KEY}")
+else:
+    try:
+        # Validate the key format
+        Fernet(ENCRYPTION_KEY.encode())
+        print("✅ Clave de cifrado válida")
+    except (InvalidToken, ValueError) as e:
+        print(f"❌ ERROR: Clave de cifrado inválida en ENCRYPTION_KEY")
+        print(f"❌ Error: {e}")
+        print("❌ Generando nueva clave temporal")
+        ENCRYPTION_KEY = Fernet.generate_key().decode()
+        print(f"🔑 Nueva clave temporal: {ENCRYPTION_KEY}")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@rp21x(+-=zysqa)d+(i!a)$-=oq@c_&1%t&pz50i3z@k-@q_r'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -120,8 +143,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 AUTHENTICATION_BACKENDS = [
-    'usuarios.backends.EmailBackend',  # Tu backend personalizado
-    'django.contrib.auth.backends.ModelBackend',  # Backend por defecto como fallback
+    'usuarios.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 
