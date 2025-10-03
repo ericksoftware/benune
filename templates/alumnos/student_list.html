@@ -32,7 +32,7 @@
                             <td>{{ alumno.matricula|default:"Pendiente" }}</td>
                             <td>{{ alumno.nombre_completo }}</td>
                             <td>{{ alumno.curp }}</td>
-                            <td>{{ alumno.licenciatura }}</td>
+                            <td>{{ alumno.get_licenciatura_display }}</td>
                             <td>{{ alumno.semestre_actual }}</td>
                             <td>
                                 <a href="{% url 'student_detail' alumno.id %}" class="btn btn-sm btn-primary-custom">

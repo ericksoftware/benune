@@ -1,0 +1,140 @@
+<!-- templates/evaluaciones/licenciaturas/form_licenciatura.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} - BENUNE{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'lista_licenciaturas' %}">Licenciaturas</a></li>
+                    <li class="breadcrumb-item active">{{ modo|title }}</li>
+                </ol>
+            </nav>
+            
+            <h1 class="h2 text-primary-custom mb-4">{{ page_title }}</h1>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary-custom text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-{% if modo == 'agregar' %}plus{% else %}edit{% endif %} me-2"></i>
+                        {{ modo|title }} Licenciatura
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Información Básica -->
+                        <div class="row">
+                            <div class="col-12 mb-4">
+                                <h5 class="text-primary-custom mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>Información Básica
+                                </h5>
+                            </div>
+                            
+                            <div class="col-md-12 mb-3">
+                                <label for="nombre" class="form-label">Título de la Licenciatura *</label>
+                                <input type="text" class="form-control" id="nombre" name="nombre" 
+                                       value="{{ licenciatura.nombre|default:'' }}" required
+                                       placeholder="Ej: LICENCIATURA EN INCLUSIÓN EDUCATIVA">
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="codigo" class="form-label">Código de Unidades *</label>
+                                <input type="text" class="form-control" id="codigo" name="codigo" 
+                                       value="{{ licenciatura.codigo|default:'' }}" required
+                                       placeholder="Ej: LIE" maxlength="10">
+                                <div class="form-text">Iniciales para las unidades (Ej: LIE, LEE, LEP)</div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="numero_semestres" class="form-label">Número de Semestres *</label>
+                                <input type="number" class="form-control" id="numero_semestres" name="numero_semestres" 
+                                       value="{{ licenciatura.numero_semestres|default:'8' }}" min="1" max="12" required>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="plan" class="form-label">Plan (Año) *</label>
+                                <input type="number" class="form-control" id="plan" name="plan" 
+                                       value="{{ licenciatura.plan|default:'2023' }}" min="2000" max="2030" required>
+                                <div class="form-text">Solo el año (Ej: 2023, 2024)</div>
+                            </div>
+
+                            <!-- En la sección de Información Básica, cambiar el campo numero_unidades -->
+                            <div class="col-md-6 mb-3">
+                                <label for="numero_unidades" class="form-label">Número de Unidades *</label>
+                                <input type="number" class="form-control" id="numero_unidades" name="numero_unidades" 
+                                    value="{% if modo == 'editar' %}{{ licenciatura.unidades.count }}{% else %}2{% endif %}" 
+                                    min="1" max="200" required>
+                                <div class="form-text">
+                                    Cantidad de unidades que tendrá la licenciatura (1-200)
+                                    {% if modo == 'editar' %}
+                                    <br><small class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>
+                                        Al reducir el número, se eliminarán las unidades sobrantes que no tengan materias asignadas
+                                    </small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Información sobre unidades automáticas -->
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Información sobre unidades</h6>
+                            <p class="mb-2"><strong>Las unidades se crearán automáticamente con el formato:</strong></p>
+                            <p class="mb-1"><code>[CÓDIGO][AÑO_PLAN][NÚMERO_UNIDAD]</code></p>
+                            <p class="mb-0">Ejemplo: Para LIE, plan 2023, 2 unidades → <code>LIE2301</code>, <code>LIE2302</code></p>
+                        </div>
+
+                        <!-- Solo en edición mostrar estado -->
+                        {% if modo == 'editar' %}
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="activa" name="activa" 
+                                       {% if licenciatura.activa %}checked{% endif %}>
+                                <label class="form-check-label" for="activa">Licenciatura activa</label>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary-custom">
+                                <i class="fas fa-save me-2"></i>
+                                {{ modo|title }} Licenciatura
+                            </button>
+                            <a href="{% url 'lista_licenciaturas' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Solo en modo edición mostrar sección de materias -->
+            {% if modo == 'editar' %}
+            <div class="card mt-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-book me-2"></i>Gestión de Materias
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Las materias se gestionan desde la página de detalle de la licenciatura.</p>
+                    <a href="{% url 'detalle_licenciatura' licenciatura.id %}" class="btn btn-success">
+                        <i class="fas fa-arrow-right me-2"></i>Ir a Gestión de Materias
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
