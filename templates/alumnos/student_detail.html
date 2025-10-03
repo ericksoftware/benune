@@ -42,8 +42,8 @@
                 </div>
                 <div class="card-body">
                     <p><strong>Matrícula:</strong> {{ alumno.matricula|default:"Pendiente" }}</p>
-                    <p><strong>Licenciatura:</strong> {{ alumno.licenciatura }}</p>
-                    <p><strong>Semestre:</strong> {{ alumno.semestre_actual }}</p>
+                    <p><strong>Licenciatura:</strong> {{ alumno.get_licenciatura_display }}</p>
+                    <p><strong>Semestre:</strong> {{ alumno.get_semestre_actual_display }}</p>
                     <p><strong>Turno:</strong> {{ alumno.get_turno_display }}</p>
                     <p><strong>Promedio:</strong> {{ alumno.promedio_prepa|default:"N/A" }}</p>
                 </div>
@@ -66,10 +66,28 @@
 
     <div class="row mt-4">
         <div class="col-12">
-            <a href="{% url 'student_list' %}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Volver a la lista
-            </a>
+            <div class="d-flex gap-2">
+                <a href="{% url 'student_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver a la lista
+                </a>
+                {% if perms.alumnos.change_alumno %}
+                <a href="{% url 'admin:alumnos_alumno_change' alumno.id %}" class="btn btn-outline-primary">
+                    <i class="fas fa-edit me-2"></i>Editar en Admin
+                </a>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Función para formatear fechas si es necesario
+document.addEventListener('DOMContentLoaded', function() {
+    // Puedes agregar funcionalidad JavaScript aquí si necesitas
+    // formatear fechas u otras mejoras visuales
+    console.log('Página de detalle de alumno cargada');
+});
+</script>
 {% endblock %}

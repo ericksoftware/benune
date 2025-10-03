@@ -1,16 +1,19 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from core.fields import EncryptedCharField, EncryptedEmailField  # Importación corregida
+from core.fields import EncryptedCharField, EncryptedEmailField
 
 class Usuario(AbstractUser):
     TIPO_USUARIO_CHOICES = [
         ('directivo', 'Directivo'),
         ('control_escolar', 'Control Escolar'),
         ('docente', 'Docente'),
-        ('alumno', 'Alumno'),
     ]
     
-    # Hacer que el username no sea obligatorio ya que usaremos email
+    TURNO_CHOICES = [
+        ('matutino', 'Matutino'),
+        ('vespertino', 'Vespertino'),
+    ]
+    
     username = models.CharField(
         max_length=150,
         unique=True,
@@ -25,13 +28,17 @@ class Usuario(AbstractUser):
         default='docente'
     )
     
-    telefono = EncryptedCharField(max_length=15, blank=True)
-    email = EncryptedEmailField(unique=True)  # Ahora está importado correctamente
+    turno = models.CharField(max_length=20, choices=TURNO_CHOICES, default='matutino')
+    
+    # Campos cifrados con tamaño seguro
+    telefono = EncryptedCharField(max_length=500, blank=True, default='N/A')
+    email = EncryptedEmailField(unique=True)
+    email_personal = EncryptedEmailField(blank=True, default='N/A')
+    
     fecha_actualizacion = models.DateTimeField(auto_now=True)
     
-    # Configurar email como campo de autenticación principal
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']  # username ya no es requerido para login
+    REQUIRED_FIELDS = ['username']
     
     class Meta:
         verbose_name = 'Usuario'
@@ -44,7 +51,6 @@ class Usuario(AbstractUser):
         return dict(self.TIPO_USUARIO_CHOICES).get(self.tipo_usuario, self.tipo_usuario)
     
     def save(self, *args, **kwargs):
-        # Si no hay username, usar parte del email antes del @
         if not self.username and self.email:
             self.username = self.email.split('@')[0]
         super().save(*args, **kwargs)

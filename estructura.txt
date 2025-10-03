@@ -65,13 +65,13 @@ BENUNE_SISTEMA/
 │   │   ├── certificate_list.html      # Lista de constancias
 │   │   ├── generate_certificate.html  # Generar constancia
 │   │   ├── view_certificate.html      # Ver constancia
-│   │   └── certificate_template.html  # Template PDF para constancias
+│   │   └── certificate_template.html  # Template PDF para constancias (aun no existe)
 │   └── evaluaciones/
 │       ├── grade_list.html            # Lista de calificaciones
 │       ├── import_grades.html         # Importar calificaciones
 │       ├── generate_transcript.html   # Generar acta
 │       ├── view_transcript.html       # Ver acta
-│       └── transcript_template.html   # Template PDF para actas
+│       └── transcript_template.html   # Template PDF para actas (aun no existe)
 │
 ├── 📁 static/                         # Archivos estáticos
 │   ├── css/
@@ -103,48 +103,6 @@ Usuario → Login Page → EmailBackend → Verificación →
          Credenciales incorrectas   Credenciales correctas
          ↓                           ↓
      Mensaje error                Redirección a Dashboard
-
-
-
-
-Diagrama de Relaciones de Base de Datos
-
-Usuario (AbstractUser)
-  ├── tipo_usuario (choices)
-  ├── telefono
-  └── fecha_actualizacion
-
-Alumno
-  ├── curp (único)
-  ├── nombre, apellidos
-  ├── información académica
-  ├── información contacto
-  └── fechas importantes
-
-Constancia
-  ├── alumno (ForeignKey → Alumno)
-  ├── tipo_constancia
-  ├── archivo_pdf
-  └── fechas
-
-Materia
-  ├── nombre, clave
-  ├── licenciatura, semestre
-  └── créditos
-
-Calificacion
-  ├── alumno (ForeignKey → Alumno)
-  ├── materia (ForeignKey → Materia)
-  ├── calificación
-  └── periodo
-
-ActaEvaluacion
-  ├── licenciatura, semestre, grupo
-  ├── materia (ForeignKey → Materia)
-  ├── archivo_pdf
-  └── estado
-
-
 
 
 Diagrama de Permisos por Rol
