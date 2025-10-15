@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 from cryptography.fernet import Fernet, InvalidToken
 from dotenv import load_dotenv
+from django.conf.urls import handler403
 
 load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -177,3 +178,4 @@ LOGOUT_REDIRECT_URL = 'login'
 # Email configuration (para autenticación por correo)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Para desarrollo
 
+handler403 = 'core.views.forbidden_view'

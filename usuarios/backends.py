@@ -1,6 +1,6 @@
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth import get_user_model
-from core.encryption import encryption_manager
+from alumnos.models import Alumno
 
 class EmailBackend(ModelBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
@@ -40,7 +40,47 @@ class EmailBackend(ModelBackend):
             if user and user.check_password(password):
                 return user
         
-        # TERCERO: Búsqueda manual como fallback
+        # TERCERO: Buscar alumnos
+        try:
+            print("🎓 Buscando alumno...")
+            
+            # Buscar TODOS los alumnos activos
+            alumnos = Alumno.objects.filter(estado='activo')
+            
+            for alumno in alumnos:
+                # Django automáticamente descifra el email
+                if alumno.email_institucional and alumno.email_institucional.lower() == username:
+                    print(f"✅ Alumno encontrado: {alumno.nombre_completo()}")
+                    
+                    # Comparar contraseña (automáticamente descifrada)
+                    if alumno.password_email_institucional == password:
+                        print("✅ Contraseña de alumno válida")
+                        
+                        # BUSCAR el usuario que YA EXISTE por username esperado
+                        expected_username = f"alumno_{alumno.matricula or alumno.id}"
+                        try:
+                            user = UserModel.objects.get(username=expected_username)
+                            print(f"✅ Usuario Django encontrado por username: {user.username}")
+                            
+                            # Si el usuario no tiene email, asignárselo (SOLO EN MEMORIA)
+                            if not user.email or user.email in ['', 'N/A']:
+                                user.email = username  # Solo para esta sesión
+                                print(f"🔄 Email asignado en memoria: {username}")
+                            
+                            return user
+                        except UserModel.DoesNotExist:
+                            print("❌ No se encontró usuario Django para este alumno")
+                            return None
+                    else:
+                        print("❌ Contraseña de alumno incorrecta")
+                        return None
+            
+            print(f"❌ No se encontró alumno con email: {username}")
+                        
+        except Exception as e:
+            print(f"❌ Error buscando alumno: {e}")
+            
+        # CUARTO: Búsqueda manual como fallback
         try:
             print("🔄 Búsqueda manual en todos los usuarios...")
             for user in UserModel.objects.all():

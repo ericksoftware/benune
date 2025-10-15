@@ -1,0 +1,53 @@
+<!-- templates/alumnos/student_confirm_delete.html -->
+{% extends "base.html" %}
+
+{% block title %}Eliminar Alumno - BENUNE{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <p class="lead">¿Estás seguro de que deseas eliminar al siguiente alumno?</p>
+                    
+                    <div class="alert alert-warning">
+                        <h5 class="alert-heading">{{ alumno.nombre_completo }}</h5>
+                        <p class="mb-0">
+                            <strong>Matrícula:</strong> {{ alumno.matricula|default:"PENDIENTE" }}<br>
+                            <strong>Carrera:</strong> 
+                            {% if alumno.carrera %}
+                                {{ alumno.carrera.nombre }}
+                            {% else %}
+                                No asignada
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <p class="text-danger">
+                        <strong>¡Advertencia!</strong> Esta acción no se puede deshacer y se eliminarán 
+                        todos los datos asociados al alumno, incluyendo calificaciones y constancias.
+                    </p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a href="{% url 'student_detail' alumno.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>Eliminar Definitivamente
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

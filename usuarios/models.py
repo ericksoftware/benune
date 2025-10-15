@@ -7,11 +7,13 @@ class Usuario(AbstractUser):
         ('directivo', 'Directivo'),
         ('control_escolar', 'Control Escolar'),
         ('docente', 'Docente'),
+        ('alumno', 'Alumno'), 
     ]
     
     TURNO_CHOICES = [
         ('matutino', 'Matutino'),
         ('vespertino', 'Vespertino'),
+        ('ambos turnos', 'Ambos turnos'),
     ]
     
     username = models.CharField(
