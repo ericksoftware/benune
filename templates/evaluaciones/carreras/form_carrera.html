@@ -1,4 +1,4 @@
-<!-- templates/evaluaciones/licenciaturas/form_licenciatura.html -->
+<!-- templates/evaluaciones/carreras/form_carrera.html -->
 {% extends "base.html" %}
 {% load static %}
 
@@ -11,7 +11,7 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'lista_licenciaturas' %}">Licenciaturas</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'lista_carreras' %}">Carreras</a></li>
                     <li class="breadcrumb-item active">{{ modo|title }}</li>
                 </ol>
             </nav>
@@ -26,7 +26,7 @@
                 <div class="card-header bg-primary-custom text-white">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-{% if modo == 'agregar' %}plus{% else %}edit{% endif %} me-2"></i>
-                        {{ modo|title }} Licenciatura
+                        {{ modo|title }} Carrera
                     </h5>
                 </div>
                 <div class="card-body">
@@ -42,46 +42,53 @@
                             </div>
                             
                             <div class="col-md-12 mb-3">
-                                <label for="nombre" class="form-label">Título de la Licenciatura *</label>
+                                <label for="nombre" class="form-label">Nombre de la Carrera *</label>
                                 <input type="text" class="form-control" id="nombre" name="nombre" 
-                                       value="{{ licenciatura.nombre|default:'' }}" required
-                                       placeholder="Ej: LICENCIATURA EN INCLUSIÓN EDUCATIVA">
+                                       value="{{ carrera.nombre|default:'' }}" required
+                                       placeholder="Ej: INCLUSIÓN EDUCATIVA">
                             </div>
                             
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-6 mb-3">
+                                <label for="tipo_carrera" class="form-label">Tipo de Carrera *</label>
+                                <select class="form-select" id="tipo_carrera" name="tipo_carrera" required>
+                                    <option value="">Seleccionar tipo</option>
+                                    <option value="licenciatura" {% if carrera.tipo_carrera == 'licenciatura' %}selected{% endif %}>Licenciatura</option>
+                                    <option value="ingenieria" {% if carrera.tipo_carrera == 'ingenieria' %}selected{% endif %}>Ingeniería</option>
+                                    <option value="maestria" {% if carrera.tipo_carrera == 'maestria' %}selected{% endif %}>Maestría</option>
+                                    <option value="doctorado" {% if carrera.tipo_carrera == 'doctorado' %}selected{% endif %}>Doctorado</option>
+                                    <option value="tecnico" {% if carrera.tipo_carrera == 'tecnico' %}selected{% endif %}>Técnico Superior Universitario</option>
+                                    <option value="especialidad" {% if carrera.tipo_carrera == 'especialidad' %}selected{% endif %}>Especialidad</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
                                 <label for="codigo" class="form-label">Código de Unidades *</label>
                                 <input type="text" class="form-control" id="codigo" name="codigo" 
-                                       value="{{ licenciatura.codigo|default:'' }}" required
+                                       value="{{ carrera.codigo|default:'' }}" required
                                        placeholder="Ej: LIE" maxlength="10">
-                                <div class="form-text">Iniciales para las unidades (Ej: LIE, LEE, LEP)</div>
+                                <div class="form-text">Iniciales para las unidades</div>
                             </div>
                             
                             <div class="col-md-4 mb-3">
                                 <label for="numero_semestres" class="form-label">Número de Semestres *</label>
                                 <input type="number" class="form-control" id="numero_semestres" name="numero_semestres" 
-                                       value="{{ licenciatura.numero_semestres|default:'8' }}" min="1" max="12" required>
+                                       value="{{ carrera.numero_semestres|default:'8' }}" min="1" max="12" required>
                             </div>
                             
                             <div class="col-md-4 mb-3">
                                 <label for="plan" class="form-label">Plan (Año) *</label>
                                 <input type="number" class="form-control" id="plan" name="plan" 
-                                       value="{{ licenciatura.plan|default:'2023' }}" min="2000" max="2030" required>
+                                       value="{{ carrera.plan|default:'2023' }}" min="2000" max="2030" required>
                                 <div class="form-text">Solo el año (Ej: 2023, 2024)</div>
                             </div>
 
-                            <!-- En la sección de Información Básica, cambiar el campo numero_unidades -->
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label for="numero_unidades" class="form-label">Número de Unidades *</label>
                                 <input type="number" class="form-control" id="numero_unidades" name="numero_unidades" 
-                                    value="{% if modo == 'editar' %}{{ licenciatura.unidades.count }}{% else %}2{% endif %}" 
+                                    value="{% if modo == 'editar' %}{{ carrera.unidades.count }}{% else %}2{% endif %}" 
                                     min="1" max="200" required>
                                 <div class="form-text">
-                                    Cantidad de unidades que tendrá la licenciatura (1-200)
-                                    {% if modo == 'editar' %}
-                                    <br><small class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>
-                                        Al reducir el número, se eliminarán las unidades sobrantes que no tengan materias asignadas
-                                    </small>
-                                    {% endif %}
+                                    Cantidad de unidades que tendrá la carrera (1-200)
                                 </div>
                             </div>
                         </div>
@@ -99,8 +106,8 @@
                         <div class="mb-3">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="activa" name="activa" 
-                                       {% if licenciatura.activa %}checked{% endif %}>
-                                <label class="form-check-label" for="activa">Licenciatura activa</label>
+                                       {% if carrera.activa %}checked{% endif %}>
+                                <label class="form-check-label" for="activa">Carrera activa</label>
                             </div>
                         </div>
                         {% endif %}
@@ -108,32 +115,15 @@
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary-custom">
                                 <i class="fas fa-save me-2"></i>
-                                {{ modo|title }} Licenciatura
+                                {{ modo|title }} Carrera
                             </button>
-                            <a href="{% url 'lista_licenciaturas' %}" class="btn btn-secondary">
+                            <a href="{% url 'lista_carreras' %}" class="btn btn-secondary">
                                 <i class="fas fa-times me-2"></i>Cancelar
                             </a>
                         </div>
                     </form>
                 </div>
             </div>
-
-            <!-- Solo en modo edición mostrar sección de materias -->
-            {% if modo == 'editar' %}
-            <div class="card mt-4">
-                <div class="card-header bg-success text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-book me-2"></i>Gestión de Materias
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted">Las materias se gestionan desde la página de detalle de la licenciatura.</p>
-                    <a href="{% url 'detalle_licenciatura' licenciatura.id %}" class="btn btn-success">
-                        <i class="fas fa-arrow-right me-2"></i>Ir a Gestión de Materias
-                    </a>
-                </div>
-            </div>
-            {% endif %}
         </div>
     </div>
 </div>

@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 from weasyprint import HTML
 import tempfile
 
-@login_required
+@control_escolar_required
 def certificate_list(request):
     """Lista de todas las constancias"""
     constancias = Constancia.objects.all().order_by('-fecha_generacion')
@@ -77,7 +77,7 @@ def generate_certificate(request):
     }
     return render(request, 'constancias/generate_certificate.html', context)
 
-@login_required
+@control_escolar_required
 def view_certificate(request, certificate_id):
     """Ver una constancia específica"""
     constancia = get_object_or_404(Constancia, id=certificate_id)

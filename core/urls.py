@@ -1,4 +1,4 @@
-# core/urls.py
+# core/urls.py - ACTUALIZADO
 from django.urls import path
 from . import views
 
@@ -8,4 +8,7 @@ urlpatterns = [
     
     # Dashboard principal
     path('dashboard/', views.dashboard, name='dashboard'),
+    
+    # Página de acceso prohibido
+    path('forbidden/', views.forbidden_view, name='forbidden'),
 ]

@@ -1,3 +1,4 @@
+<!-- templates/alumnos/student_list.html -->
 {% extends "base.html" %}
 {% load static %}
 
@@ -7,11 +8,55 @@
 <div class="container py-4">
     <div class="row mb-4">
         <div class="col-12">
-            <h1 class="h2 text-primary-custom">Lista de Alumnos</h1>
-            <p class="lead">Total de alumnos registrados: {{ alumnos.count }}</p>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 text-primary-custom">Lista de Alumnos</h1>
+                    <p class="lead">Total de alumnos registrados: {{ alumnos.count }}</p>
+                </div>
+                <a href="{% url 'student_create' %}" class="btn btn-primary-custom">
+                    <i class="fas fa-plus me-2"></i>Nuevo Alumno
+                </a>
+            </div>
         </div>
     </div>
 
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="estado" class="form-label">Filtrar por Estado:</label>
+                    <select name="estado" id="estado" class="form-select">
+                        <option value="">Todos los estados</option>
+                        <option value="activo" {% if estado_filter == 'activo' %}selected{% endif %}>Activo</option>
+                        <option value="inactivo" {% if estado_filter == 'inactivo' %}selected{% endif %}>Inactivo</option>
+                        <option value="graduado" {% if estado_filter == 'graduado' %}selected{% endif %}>Graduado</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="carrera" class="form-label">Filtrar por Carrera:</label>
+                    <select name="carrera" id="carrera" class="form-select">
+                        <option value="">Todas las carreras</option>
+                        {% for carrera in carreras %}
+                        <option value="{{ carrera.id }}" {% if carrera_filter == carrera.id|stringformat:"s" %}selected{% endif %}>
+                            {{ carrera.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-secondary-custom me-2">
+                        <i class="fas fa-filter me-2"></i>Filtrar
+                    </button>
+                    <a href="{% url 'student_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-2"></i>Limpiar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de alumnos -->
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
@@ -21,28 +66,62 @@
                             <th>Matrícula</th>
                             <th>Nombre Completo</th>
                             <th>CURP</th>
-                            <th>Licenciatura</th>
+                            <th>Carrera</th>
                             <th>Semestre</th>
+                            <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for alumno in alumnos %}
                         <tr>
-                            <td>{{ alumno.matricula|default:"Pendiente" }}</td>
+                            <td>
+                                <strong>
+                                    {% if alumno.matricula == 'PENDIENTE' %}
+                                        <span class="text-muted">PENDIENTE</span>
+                                    {% else %}
+                                        {{ alumno.matricula }}
+                                    {% endif %}
+                                </strong>
+                            </td>
                             <td>{{ alumno.nombre_completo }}</td>
                             <td>{{ alumno.curp }}</td>
-                            <td>{{ alumno.get_licenciatura_display }}</td>
+                            <td>
+                                {% if alumno.carrera %}
+                                    {{ alumno.carrera.nombre }}
+                                {% else %}
+                                    <span class="text-muted">No asignada</span>
+                                {% endif %}
+                            </td>
                             <td>{{ alumno.semestre_actual }}</td>
                             <td>
-                                <a href="{% url 'student_detail' alumno.id %}" class="btn btn-sm btn-primary-custom">
-                                    <i class="fas fa-eye"></i> Ver
-                                </a>
+                                <span class="badge 
+                                    {% if alumno.estado == 'activo' %}bg-success
+                                    {% elif alumno.estado == 'inactivo' %}bg-warning
+                                    {% else %}bg-info{% endif %}">
+                                    {{ alumno.get_estado_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'student_detail' alumno.id %}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>Detalles
+                                    </a>
+                                    <!-- <a href="{% url 'student_edit' alumno.id %}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </a> -->
+                                </div>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="6" class="text-center">No hay alumnos registrados</td>
+                            <td colspan="7" class="text-center py-4">
+                                <i class="fas fa-users fa-2x text-muted mb-3"></i>
+                                <p class="text-muted">No hay alumnos registrados</p>
+                                <a href="{% url 'student_create' %}" class="btn btn-primary-custom">
+                                    <i class="fas fa-plus me-2"></i>Registrar Primer Alumno
+                                </a>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>

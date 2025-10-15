@@ -27,8 +27,10 @@
     <div class="row g-4">
         <!-- Módulo de Alumnos -->
         <div class="col-md-6 col-lg-4 col-xl-3 col-xxl-2">
+            {% if user.tipo_usuario == 'control_escolar' %}
             <a href="{% url 'student_list' %}" class="card-module-link">
-                <div class="card card-module h-100 text-center border-0">
+            {% endif %}
+                <div class="card card-module h-100 text-center border-0 {% if user.tipo_usuario != 'control_escolar' %}module-disabled{% endif %}">
                     <div class="card-header bg-primary-custom text-white py-4 position-relative">
                         <div class="module-icon-wrapper">
                             <i class="fas fa-users fa-2x"></i>
@@ -37,12 +39,18 @@
                     </div>
                     <div class="card-body p-4 pt-5">
                         <h3 class="h5 card-title text-primary-custom fw-bold mb-2">Gestión de Alumnos</h3>
-                        <p class="card-text small text-muted">Consulta la información de alumnos del sistema.</p>
+                        <p class="card-text small text-muted">{% if user.tipo_usuario == 'control_escolar' %}Gestiona{% else %}Consulta{% endif %} la información de alumnos del sistema.</p>
                     </div>
                     <div class="card-footer bg-transparent border-0 pb-3 pt-0">
-                        <span class="btn btn-primary-custom btn-sm px-3">
-                            Acceder <i class="fas fa-arrow-right ms-2"></i>
+                        {% if user.tipo_usuario == 'control_escolar' %}
+                        <span class="btn btn-secondary-custom btn-sm px-3">
+                            Gestionar <i class="fas fa-arrow-right ms-2"></i>
                         </span>
+                        {% else %}
+                        <span class="badge bg-secondary py-2 px-3">
+                            <i class="fas fa-lock me-1"></i>Solo Control Escolar
+                        </span>
+                        {% endif %}
                     </div>
                 </div>
             </a>
@@ -115,9 +123,10 @@
         </div>
 
         <!-- Módulo de Licenciaturas -->
+        <!-- En el módulo de Licenciaturas, cambiar a Carreras -->
         <div class="col-md-6 col-lg-4 col-xl-3 col-xxl-2">
             {% if user.tipo_usuario == 'control_escolar' %}
-            <a href="{% url 'lista_licenciaturas' %}" class="card-module-link">
+            <a href="{% url 'lista_carreras' %}" class="card-module-link">
             {% endif %}
                 <div class="card card-module h-100 text-center border-0 {% if user.tipo_usuario != 'control_escolar' %}module-disabled{% endif %}">
                     <div class="card-header bg-success text-white py-4 position-relative">
@@ -127,8 +136,8 @@
                         <div class="hover-effect"></div>
                     </div>
                     <div class="card-body p-4 pt-5">
-                        <h3 class="h5 card-title text-success fw-bold mb-2">Licenciaturas</h3>
-                        <p class="card-text small text-muted">{% if user.tipo_usuario == 'control_escolar' %}Gestiona{% else %}Consulta{% endif %} las licenciaturas del sistema.</p>
+                        <h3 class="h5 card-title text-success fw-bold mb-2">Carreras</h3>
+                        <p class="card-text small text-muted">{% if user.tipo_usuario == 'control_escolar' %}Gestiona{% else %}Consulta{% endif %} las carreras del sistema.</p>
                     </div>
                     <div class="card-footer bg-transparent border-0 pb-3 pt-0">
                         {% if user.tipo_usuario == 'control_escolar' %}

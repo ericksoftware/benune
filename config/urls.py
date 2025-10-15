@@ -1,4 +1,4 @@
-# benune_project/urls.py
+# config/urls.py - ACTUALIZAR EL LOGOUT
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
@@ -19,11 +19,12 @@ urlpatterns = [
         redirect_authenticated_user=True
     ), name='login'),
     
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    # Usar vista personalizada para logout que acepta GET
+    path('logout/', core_views.custom_logout, name='logout'),
     
     # Incluir URLs de las apps
     path('', include('core.urls')),        # Dashboard
-    path('alumnos/', include('alumnos.urls')),      # Visualización de alumnos
+    path('alumnos/', include('alumnos.urls')),      # Alumnos (solo control escolar)
     path('constancias/', include('constancias.urls')),  # Constancias (solo control escolar)
     path('evaluaciones/', include('evaluaciones.urls')), # Evaluaciones (solo control escolar)
 ]

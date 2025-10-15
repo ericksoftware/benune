@@ -60,6 +60,8 @@ BENUNE_SISTEMA/
 │   │   └── dashboard.html             # Dashboard principal
 │   ├── alumnos/
 │   │   ├── student_list.html          # Lista de alumnos
+│   │   ├── student_form.html         
+│   │   ├── student_confirm_delete.html          
 │   │   └── student_detail.html        # Detalle de alumno
 │   ├── constancias/
 │   │   ├── certificate_list.html      # Lista de constancias
@@ -71,7 +73,11 @@ BENUNE_SISTEMA/
 │       ├── import_grades.html         # Importar calificaciones
 │       ├── generate_transcript.html   # Generar acta
 │       ├── view_transcript.html       # Ver acta
-│       └── transcript_template.html   # Template PDF para actas (aun no existe)
+│       ├── transcript_template.html   # Template PDF para actas (aun no existe)
+│       └── carreras/
+│           ├── detalle_carrera.html          
+│           ├── form_carrera.html         
+│           └── lista_carreras.html   
 │
 ├── 📁 static/                         # Archivos estáticos
 │   ├── css/

@@ -1,10 +1,12 @@
+<!-- templates/alumnos/student_detail.html -->
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Detalle de Alumno - BENUNE{% endblock %}
+{% block title %}{{ page_title }} - BENUNE{% endblock %}
 
 {% block content %}
 <div class="container py-4">
+    <!-- Encabezado -->
     <div class="row mb-4">
         <div class="col-12">
             <nav aria-label="breadcrumb">
@@ -15,79 +17,421 @@
                 </ol>
             </nav>
             
-            <h1 class="h2 text-primary-custom">Detalle del Alumno</h1>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 text-primary-custom">{{ alumno.nombre_completo }}</h1>
+                    <!-- <p class="lead mb-0">Matrícula: {{ alumno.matricula|default:"PENDIENTE" }}</p> -->
+                </div>
+                <div class="btn-group">
+                    <a href="{% url 'student_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Volver
+                    </a>
+                    <a href="{% url 'student_edit' alumno.id %}" class="btn btn-warning">
+                        <i class="fas fa-edit me-2"></i>Editar
+                    </a>
+                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#calificacionesModal">
+                        <i class="fas fa-edit me-2"></i>Editar Calificaciones
+                    </button>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="fas fa-trash me-2"></i>Eliminar
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- Información del Alumno -->
     <div class="row">
-        <div class="col-md-4">
-            <div class="card">
+        <!-- Columna Izquierda - Información Principal -->
+        <div class="col-md-8">
+            <!-- Información Básica -->
+            <div class="card mb-4">
                 <div class="card-header bg-primary-custom text-white">
-                    <h5 class="card-title mb-0">Información Personal</h5>
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user me-2"></i>Información Básica
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>Nombre:</strong> {{ alumno.nombre_completo }}</p>
-                    <p><strong>CURP:</strong> {{ alumno.curp }}</p>
-                    <p><strong>Fecha de Nacimiento:</strong> {{ alumno.fecha_nacimiento }}</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Matrícula:</strong> {{ alumno.matricula|default:"PENDIENTE" }}</p>
+                            <p><strong>CURP:</strong> {{ alumno.curp }}</p>
+                            <p><strong>RFC:</strong> {{ alumno.rfc }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Nombre:</strong> {{ alumno.nombre_completo }}</p>
+                            <p><strong>Fecha de Registro:</strong> {{ alumno.fecha_registro|date:"d/m/Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información Académica -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary-custom text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-graduation-cap me-2"></i>Información Académica
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Carrera:</strong> 
+                                {% if alumno.carrera %}
+                                    {{ alumno.carrera.nombre }}
+                                {% else %}
+                                    <span class="text-muted">No asignada</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Semestre Actual:</strong> {{ alumno.semestre_actual }}</p>
+                            <p><strong>Turno:</strong> {{ alumno.get_turno_display }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Plan:</strong> {{ alumno.plan }}</p>
+                            <p><strong>Promedio Semestre Anterior:</strong> 
+                                {% if alumno.promedio_semestre_anterior %}
+                                    {{ alumno.promedio_semestre_anterior }}
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Estado:</strong> 
+                                <span class="badge 
+                                    {% if alumno.estado == 'activo' %}bg-success
+                                    {% elif alumno.estado == 'inactivo' %}bg-warning
+                                    {% else %}bg-info{% endif %}">
+                                    {{ alumno.get_estado_display }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calificaciones -->
+            <div class="card">
+                <div class="card-header bg-primary-custom text-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Calificaciones
+                        <span class="badge bg-light text-dark ms-2">{{ calificaciones.count }}</span>
+                    </h5>
+                    <small>Total: {{ calificaciones.count }}</small>
+                </div>
+                <div class="card-body p-0">  <!-- p-0 para quitar padding y que la tabla ocupe todo -->
+                    {% if calificaciones %}
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">  <!-- Altura fija para ~8 filas -->
+                            <table class="table table-striped table-hover mb-0">  <!-- mb-0 para quitar margen inferior -->
+                                <thead class="sticky-top bg-light">
+                                    <tr>
+                                        <th style="position: sticky; top: 0; background: #f8f9fa;">Materia</th>
+                                        <th style="position: sticky; top: 0; background: #f8f9fa;">Semestre</th>
+                                        <th style="position: sticky; top: 0; background: #f8f9fa;">Calificación</th>
+                                        <th style="position: sticky; top: 0; background: #f8f9fa;">Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for calificacion in calificaciones %}
+                                    <tr>
+                                        <td>{{ calificacion.materia.nombre }}</td>
+                                        <td>{{ calificacion.materia.semestre }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if calificacion.calificacion >= 8 %}bg-success
+                                                {% elif calificacion.calificacion >= 6 %}bg-warning
+                                                {% else %}bg-danger{% endif %}">
+                                                {{ calificacion.calificacion|default:"N/A" }}
+                                            </span>
+                                        </td>
+                                        <td>{{ calificacion.fecha_registro|date:"d/m/Y" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">  <!-- py-4 para mantener espaciado consistente -->
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                No hay calificaciones registradas para este alumno.
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha - Información Secundaria -->
+        <div class="col-md-4">
+            <!-- Información Personal -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-id-card me-2"></i>Información Personal
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Fecha de Nacimiento:</strong> 
+                        {% if alumno.fecha_nacimiento %}
+                            {{ alumno.fecha_nacimiento|date:"d/m/Y" }}
+                        {% else %}
+                            <span class="text-muted">N/A</span>
+                        {% endif %}
+                    </p>
                     <p><strong>Sexo:</strong> {{ alumno.get_sexo_display }}</p>
-                    <p><strong>Lugar de Nacimiento:</strong> {{ alumno.municipio_estado_nacimiento }}</p>
+                    <p><strong>Municipio/Estado de Nacimiento:</strong> {{ alumno.municipio_nacimiento }}</p>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header bg-primary-custom text-white">
-                    <h5 class="card-title mb-0">Información Académica</h5>
+            <!-- Información de Procedencia -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-school me-2"></i>Procedencia
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>Matrícula:</strong> {{ alumno.matricula|default:"Pendiente" }}</p>
-                    <p><strong>Licenciatura:</strong> {{ alumno.get_licenciatura_display }}</p>
-                    <p><strong>Semestre:</strong> {{ alumno.get_semestre_actual_display }}</p>
-                    <p><strong>Turno:</strong> {{ alumno.get_turno_display }}</p>
-                    <p><strong>Promedio:</strong> {{ alumno.promedio_prepa|default:"N/A" }}</p>
+                    <p><strong>Institución:</strong> {{ alumno.institucion_procedencia }}</p>
+                    <p><strong>Municipio/Estado:</strong> {{ alumno.municipio_institucion }}</p>
+                    <p><strong>Clave de Escuela:</strong> {{ alumno.clave_escuela }}</p>
+                    <p><strong>Fecha de Terminación:</strong> 
+                        {% if alumno.fecha_terminacion_prepa %}
+                            {{ alumno.fecha_terminacion_prepa|date:"d/m/Y" }}
+                        {% else %}
+                            <span class="text-muted">N/A</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Promedio Preparatoria:</strong> 
+                        {% if alumno.promedio_prepa %}
+                            {{ alumno.promedio_prepa }}
+                        {% else %}
+                            <span class="text-muted">N/A</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Constancia de Terminación:</strong> 
+                        <span class="badge {% if alumno.constancia_terminacion == 'si' %}bg-success{% else %}bg-warning{% endif %}">
+                            {{ alumno.get_constancia_terminacion_display }}
+                        </span>
+                    </p>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-4">
+            <!-- Información de Contacto -->
             <div class="card">
-                <div class="card-header bg-primary-custom text-white">
-                    <h5 class="card-title mb-0">Información de Contacto</h5>
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-address-book me-2"></i>Contacto
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>Institución de Procedencia:</strong> {{ alumno.institucion_procedencia }}</p>
-                    <p><strong>Correo:</strong> {{ alumno.correo_particular|default:"N/A" }}</p>
-                    <p><strong>Teléfono:</strong> {{ alumno.numero_celular|default:"N/A" }}</p>
+                    <p><strong>Correo Institucional:</strong> {{ alumno.email_institucional }}</p>
+                    <p><strong>Correo Personal:</strong> {{ alumno.email_personal }}</p>
+                    <p><strong>Teléfono:</strong> {{ alumno.telefono }}</p>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="d-flex gap-2">
-                <a href="{% url 'student_list' %}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left me-2"></i>Volver a la lista
-                </a>
-                {% if perms.alumnos.change_alumno %}
-                <a href="{% url 'admin:alumnos_alumno_change' alumno.id %}" class="btn btn-outline-primary">
-                    <i class="fas fa-edit me-2"></i>Editar en Admin
-                </a>
-                {% endif %}
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
+<div class="modal fade" id="calificacionesModal" tabindex="-1" aria-labelledby="calificacionesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="max-width: 900px;">  <!-- Un poco más ancho que modal-lg normal -->
+        <div class="modal-content">
+            <div class="modal-header bg-primary-custom text-white">
+                <h5 class="modal-title" id="calificacionesModalLabel">
+                    <i class="fas fa-edit me-2"></i>
+                    Calificaciones - {{ alumno.nombre_completo }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'student_update_grades' alumno.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    
+                    <!-- Tabla con altura fija y scroll -->
+                    <div class="table-responsive" style="max-height: 550px; overflow-y: auto;">  <!-- Altura para ~10-12 filas -->
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark sticky-top">
+                                <tr>
+                                    <th width="25%" style="position: sticky; top: 0; background: #343a40;">Código Unidad</th>
+                                    <th width="15%" style="position: sticky; top: 0; background: #343a40;">Semestre</th>
+                                    <th width="40%" style="position: sticky; top: 0; background: #343a40;">Materia</th>
+                                    <th width="20%" style="position: sticky; top: 0; background: #343a40;">Calificación</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if materias_carrera %}
+                                    {% for materia in materias_carrera %}
+                                    <tr>
+                                        <td>
+                                            {% if materia.unidades.all %}
+                                                {% for unidad in materia.unidades.all %}
+                                                    <span class="badge bg-primary me-1">{{ unidad.codigo }}</span>
+                                                {% endfor %}
+                                            {% else %}
+                                                <span class="text-muted">Sin unidad</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ materia.semestre }}
+                                        </td>
+                                        <td>
+                                            {{ materia.nombre }}
+                                            {% if not materia.activa %}
+                                                <span class="badge bg-warning ms-1">Inactiva</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <!-- LÓGICA ORIGINAL QUE FUNCIONA - NO MODIFICAR -->
+                                            {% for calificacion in calificaciones %}
+                                                {% if calificacion.materia.id == materia.id %}
+                                                    <!-- Si existe calificación, mostrar campo con valor -->
+                                                    <input type="number" 
+                                                           name="calificacion_{{ materia.id }}" 
+                                                           class="form-control calificacion-input" 
+                                                           min="0" 
+                                                           max="10" 
+                                                           step="0.1"
+                                                           value="{{ calificacion.calificacion }}"
+                                                           placeholder="N/A">
+                                                {% endif %}
+                                            {% endfor %}
+                                            
+                                            <!-- Si no se encontró calificación en el bucle anterior, mostrar campo vacío -->
+                                            {% if not calificaciones or not calificaciones|dictsort:"materia.id" %}
+                                                <input type="number" 
+                                                       name="calificacion_{{ materia.id }}" 
+                                                       class="form-control calificacion-input" 
+                                                       min="0" 
+                                                       max="10" 
+                                                       step="0.1"
+                                                       value=""
+                                                       placeholder="N/A">
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4">
+                                            <div class="text-muted">
+                                                <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                                                <p>No hay materias registradas para esta carrera.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Información adicional -->
+                    <div class="card mt-3">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Información de Calificaciones
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-3">
+                                    <small class="text-muted">Total Materias</small>
+                                    <div><strong>{{ materias_carrera|length }}</strong></div>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">Calificadas</small>
+                                    <div><strong>{{ materias_calificadas }}</strong></div>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">Por Calificar</small>
+                                    <div><strong>{{ materias_por_calificar }}</strong></div>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">Promedio</small>
+                                    <div><strong>{{ promedio_general|default:"N/A" }}</strong></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Guardar Calificaciones
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar al alumno <strong>{{ alumno.nombre_completo }}</strong>?</p>
+                <p class="text-danger"><strong>Esta acción no se puede deshacer.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="post" action="{% url 'student_delete' alumno.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.calificacion-input {
+    text-align: center;
+    font-weight: bold;
+}
+
+.calificacion-input:focus {
+    border-color: #831012;
+    box-shadow: 0 0 0 0.2rem rgba(131, 16, 18, 0.25);
+}
+
+/* Mejorar la apariencia del scroll */
+.table-responsive::-webkit-scrollbar {
+    width: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+</style>
+
 <script>
-// Función para formatear fechas si es necesario
-document.addEventListener('DOMContentLoaded', function() {
-    // Puedes agregar funcionalidad JavaScript aquí si necesitas
-    // formatear fechas u otras mejoras visuales
-    console.log('Página de detalle de alumno cargada');
+// Debug mejorado y compacto
+document.getElementById('calificacionesModal').addEventListener('shown.bs.modal', function() {
+    const inputs = document.querySelectorAll('input[name^="calificacion_"]');
+    console.log('🔍 Modal abierto - Campos:', inputs.length);
+    
+    let calificadas = 0;
+    inputs.forEach(input => {
+        if (input.value && input.value !== '') calificadas++;
+    });
+    
+    console.log(`🔍 Calificadas: ${calificadas}/${inputs.length}`);
 });
 </script>
 {% endblock %}

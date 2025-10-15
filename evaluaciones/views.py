@@ -1,9 +1,10 @@
+# evaluaciones/views.py
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
 from core.decorators import control_escolar_required
-from .models import Calificacion, Materia, ActaEvaluacion
+from .models import Calificacion, Materia, ActaEvaluacion, Carrera, Unidad
 from alumnos.models import Alumno
 import pandas as pd
 import os
@@ -11,20 +12,19 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from weasyprint import HTML
 from django.db import models
-from .models import Licenciatura, Unidad
 
-@login_required
+@control_escolar_required
 def grade_list(request):
     """Lista de calificaciones"""
     calificaciones = Calificacion.objects.all().select_related('alumno', 'materia')
     
     # Filtrar por parámetros GET
-    licenciatura = request.GET.get('licenciatura')
+    carrera = request.GET.get('carrera')
     semestre = request.GET.get('semestre')
     materia_id = request.GET.get('materia')
     
-    if licenciatura:
-        calificaciones = calificaciones.filter(alumno__licenciatura=licenciatura)
+    if carrera:
+        calificaciones = calificaciones.filter(alumno__carrera=carrera)
     if semestre:
         calificaciones = calificaciones.filter(alumno__semestre_actual=semestre)
     if materia_id:
@@ -35,7 +35,7 @@ def grade_list(request):
     context = {
         'calificaciones': calificaciones,
         'materias': materias,
-        'licenciatura_filter': licenciatura,
+        'carrera_filter': carrera,
         'semestre_filter': semestre,
         'materia_filter': materia_id,
         'page_title': 'Lista de Calificaciones'
@@ -47,7 +47,7 @@ def import_grades(request):
     if request.method == 'POST':
         try:
             excel_file = request.FILES['excel_file']
-            licenciatura = request.POST['licenciatura']
+            carrera = request.POST['carrera']
             semestre = request.POST['semestre']
             
             # Leer el archivo Excel
@@ -67,11 +67,11 @@ def import_grades(request):
             for index, row in df.iterrows():
                 try:
                     matricula = str(row['MATRICULA']).strip()
-                    codigo_materia = str(row['MATERIA']).strip()  # Cambiar nombre por código
+                    nombre_materia = str(row['MATERIA']).strip()  # Cambiado a nombre en lugar de código
                     calificacion_val = float(row['CALIFICACION'])
                     
                     alumno = Alumno.objects.get(matricula=matricula)
-                    materia = Materia.objects.get(codigo=codigo_materia)
+                    materia = Materia.objects.get(nombre=nombre_materia)
                     
                     # Crear o actualizar calificación
                     calificacion, created = Calificacion.objects.update_or_create(
@@ -104,7 +104,7 @@ def generate_transcript(request):
     """Generar acta de evaluación"""
     if request.method == 'POST':
         try:
-            licenciatura = request.POST['licenciatura']
+            carrera = request.POST['carrera']
             semestre = request.POST['semestre']
             grupo = request.POST['grupo']
             materia_id = request.POST['materia']
@@ -115,7 +115,7 @@ def generate_transcript(request):
             
             # Crear el acta
             acta = ActaEvaluacion.objects.create(
-                licenciatura=licenciatura,
+                carrera_id=carrera,
                 semestre=semestre,
                 grupo=grupo,
                 materia=materia,
@@ -126,7 +126,7 @@ def generate_transcript(request):
             
             # Obtener calificaciones para este acta
             calificaciones = Calificacion.objects.filter(
-                alumno__licenciatura=licenciatura,
+                alumno__carrera=carrera,
                 alumno__semestre_actual=semestre,
                 materia=materia,
                 periodo=periodo
@@ -144,7 +144,7 @@ def generate_transcript(request):
             result = html.write_pdf()
             
             # Guardar el PDF
-            pdf_path = f'actas/{acta.id}_{acta.materia.codigo}_{acta.grupo}.pdf'
+            pdf_path = f'actas/{acta.id}_{acta.materia.nombre.replace(" ", "_")}_{acta.grupo}.pdf'
             full_path = os.path.join(settings.MEDIA_ROOT, pdf_path)
             
             os.makedirs(os.path.dirname(full_path), exist_ok=True)
@@ -169,12 +169,12 @@ def generate_transcript(request):
     }
     return render(request, 'evaluaciones/generate_transcript.html', context)
 
-@login_required
+@control_escolar_required
 def view_transcript(request, transcript_id):
     """Ver un acta de evaluación específica"""
     acta = get_object_or_404(ActaEvaluacion, id=transcript_id)
     calificaciones = Calificacion.objects.filter(
-        alumno__licenciatura=acta.licenciatura,
+        alumno__carrera=acta.carrera,
         alumno__semestre_actual=acta.semestre,
         materia=acta.materia,
         periodo=acta.periodo
@@ -198,101 +198,95 @@ def download_transcript(request, transcript_id):
         file_path = acta.archivo_pdf.path
         with open(file_path, 'rb') as f:
             response = HttpResponse(f.read(), content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="acta_{acta.materia.codigo}_{acta.grupo}.pdf"'
+            response['Content-Disposition'] = f'attachment; filename="acta_{acta.materia.nombre.replace(" ", "_")}_{acta.grupo}.pdf"'
             return response
     
     messages.error(request, 'El archivo PDF no está disponible')
     return redirect('view_transcript', transcript_id=transcript_id)
 
-# evaluaciones/views.py - Agrega estas vistas
-
 @control_escolar_required
-def lista_licenciaturas(request):
-    """Lista todas las licenciaturas"""
-    licenciaturas = Licenciatura.objects.all().order_by('id')  # Ordenar por ID de menor a mayor
+def lista_carreras(request):
+    """Lista todas las carreras"""
+    carreras = Carrera.objects.all().order_by('id')
     
     context = {
-        'licenciaturas': licenciaturas,
-        'page_title': 'Gestión de Licenciaturas'
+        'carreras': carreras,
+        'page_title': 'Gestión de Carreras'
     }
-    return render(request, 'evaluaciones/licenciaturas/lista_licenciaturas.html', context)
+    return render(request, 'evaluaciones/carreras/lista_carreras.html', context)
 
 @control_escolar_required
-def agregar_licenciatura(request):
-    """Agregar una nueva licenciatura"""
+def agregar_carrera(request):
+    """Agregar una nueva carrera"""
     if request.method == 'POST':
         try:
             nombre = request.POST['nombre']
+            tipo_carrera = request.POST['tipo_carrera']
             numero_semestres = request.POST['numero_semestres']
             plan = request.POST['plan']
             codigo = request.POST.get('codigo', '')
-            numero_unidades = int(request.POST.get('numero_unidades', 2))  # Nuevo campo
+            numero_unidades = int(request.POST.get('numero_unidades', 2))
             
-            # Crear la licenciatura
-            licenciatura = Licenciatura.objects.create(
+            # Crear la carrera
+            carrera = Carrera.objects.create(
                 nombre=nombre,
+                tipo_carrera=tipo_carrera,
                 numero_semestres=numero_semestres,
                 plan=plan,
                 codigo=codigo
             )
             
             # Crear unidades automáticamente basadas en el número especificado
-            año_plan = str(licenciatura.plan)[-2:]
+            año_plan = str(carrera.plan)[-2:]
             
             for i in range(1, numero_unidades + 1):
                 Unidad.objects.create(
-                    licenciatura=licenciatura,
+                    carrera=carrera,
                     numero=i,
-                    nombre=f'Unidad {i}',  # Nombre simple basado en el número
-                    # El código se generará automáticamente en el save() del modelo
+                    nombre=f'Unidad {i}',
                 )
             
-            messages.success(request, f'Licenciatura "{nombre}" agregada exitosamente con {numero_unidades} unidades')
-            return redirect('lista_licenciaturas')
+            messages.success(request, f'Carrera "{nombre}" agregada exitosamente con {numero_unidades} unidades')
+            return redirect('lista_carreras')
             
         except Exception as e:
-            messages.error(request, f'Error al agregar la licenciatura: {str(e)}')
+            messages.error(request, f'Error al agregar la carrera: {str(e)}')
     
     context = {
-        'page_title': 'Agregar Licenciatura',
+        'page_title': 'Agregar Carrera',
         'modo': 'agregar'
     }
-    return render(request, 'evaluaciones/licenciaturas/form_licenciatura.html', context)
-    
-    context = {
-        'page_title': 'Agregar Licenciatura',
-        'modo': 'agregar'
-    }
-    return render(request, 'evaluaciones/licenciaturas/form_licenciatura.html', context)
+    return render(request, 'evaluaciones/carreras/form_carrera.html', context)
 
 @control_escolar_required
-def editar_licenciatura(request, licenciatura_id):
-    """Editar una licenciatura existente"""
-    licenciatura = get_object_or_404(Licenciatura, id=licenciatura_id)
+def editar_carrera(request, carrera_id):
+    """Editar una carrera existente"""
+    carrera = get_object_or_404(Carrera, id=carrera_id)
     
     if request.method == 'POST':
         try:
-            numero_unidades_nuevo = int(request.POST.get('numero_unidades', licenciatura.unidades.count()))
-            numero_unidades_actual = licenciatura.unidades.count()
+            numero_unidades_nuevo = int(request.POST.get('numero_unidades', carrera.unidades.count()))
+            numero_unidades_actual = carrera.unidades.count()
             
             # Actualizar información básica
-            licenciatura.nombre = request.POST['nombre']
-            licenciatura.numero_semestres = request.POST['numero_semestres']
-            licenciatura.plan = request.POST['plan']
-            licenciatura.codigo = request.POST.get('codigo', '')
-            licenciatura.activa = 'activa' in request.POST
+            carrera.nombre = request.POST['nombre']
+            carrera.tipo_carrera = request.POST['tipo_carrera']
+            carrera.numero_semestres = request.POST['numero_semestres']
+            carrera.plan = request.POST['plan']
+            carrera.codigo = request.POST.get('codigo', '')
+            carrera.activa = 'activa' in request.POST
             
-            licenciatura.save()
+            carrera.save()
             
             # Manejar cambio en el número de unidades
             if numero_unidades_nuevo != numero_unidades_actual:
-                año_plan = str(licenciatura.plan)[-2:]
+                año_plan = str(carrera.plan)[-2:]
                 
                 if numero_unidades_nuevo > numero_unidades_actual:
                     # Agregar unidades nuevas
                     for i in range(numero_unidades_actual + 1, numero_unidades_nuevo + 1):
                         Unidad.objects.create(
-                            licenciatura=licenciatura,
+                            carrera=carrera,
                             numero=i,
                             nombre=f'Unidad {i}'
                         )
@@ -300,7 +294,7 @@ def editar_licenciatura(request, licenciatura_id):
                     
                 elif numero_unidades_nuevo < numero_unidades_actual:
                     # Eliminar unidades sobrantes (solo si no tienen materias)
-                    unidades_a_eliminar = licenciatura.unidades.filter(numero__gt=numero_unidades_nuevo)
+                    unidades_a_eliminar = carrera.unidades.filter(numero__gt=numero_unidades_nuevo)
                     unidades_con_materias = []
                     unidades_eliminadas = 0
                     
@@ -314,91 +308,106 @@ def editar_licenciatura(request, licenciatura_id):
                     if unidades_con_materias:
                         messages.warning(request, f'No se pudieron eliminar {len(unidades_con_materias)} unidades porque tienen materias: {", ".join(unidades_con_materias)}')
             
-            messages.success(request, f'Licenciatura "{licenciatura.nombre}" actualizada exitosamente')
-            return redirect('detalle_licenciatura', licenciatura_id=licenciatura.id)
+            messages.success(request, f'Carrera "{carrera.nombre}" actualizada exitosamente')
+            return redirect('detalle_carrera', carrera_id=carrera.id)
             
         except Exception as e:
-            messages.error(request, f'Error al actualizar la licenciatura: {str(e)}')
+            messages.error(request, f'Error al actualizar la carrera: {str(e)}')
     
     context = {
-        'licenciatura': licenciatura,
-        'page_title': f'Editar {licenciatura.nombre}',
+        'carrera': carrera,
+        'page_title': f'Editar {carrera.nombre}',
         'modo': 'editar'
     }
-    return render(request, 'evaluaciones/licenciaturas/form_licenciatura.html', context)
+    return render(request, 'evaluaciones/carreras/form_carrera.html', context)
 
 @control_escolar_required
-def detalle_licenciatura(request, licenciatura_id):
-    """Ver detalle de una licenciatura"""
-    licenciatura = get_object_or_404(Licenciatura, id=licenciatura_id)
-    unidades = licenciatura.unidades.all().prefetch_related('materias')
+def detalle_carrera(request, carrera_id):
+    """Ver detalle de una carrera"""
+    carrera = get_object_or_404(Carrera, id=carrera_id)
+    unidades = carrera.unidades.all().prefetch_related('materias')  # VOLVER A prefetch_related
     
     # Obtener materias por semestre
     materias_por_semestre = {}
-    for semestre in range(1, licenciatura.numero_semestres + 1):
+    for semestre in range(1, carrera.numero_semestres + 1):
         materias_por_semestre[semestre] = Materia.objects.filter(
-            licenciatura=licenciatura,
+            carrera=carrera,
             semestre=semestre
-        ).select_related('unidad')
+        ).prefetch_related('unidades')
     
     context = {
-        'licenciatura': licenciatura,
+        'carrera': carrera,
         'unidades': unidades,
         'materias_por_semestre': materias_por_semestre,
-        'page_title': f'Detalle de {licenciatura.nombre}'
+        'page_title': f'Detalle de {carrera.nombre}'
     }
-    return render(request, 'evaluaciones/licenciaturas/detalle_licenciatura.html', context)
+    return render(request, 'evaluaciones/carreras/detalle_carrera.html', context)
 
 @control_escolar_required
-def eliminar_licenciatura(request, licenciatura_id):
-    """Eliminar una licenciatura"""
-    licenciatura = get_object_or_404(Licenciatura, id=licenciatura_id)
+def eliminar_carrera(request, carrera_id):
+    """Eliminar una carrera"""
+    carrera = get_object_or_404(Carrera, id=carrera_id)
     
     if request.method == 'POST':
         try:
-            nombre = licenciatura.nombre
-            licenciatura.delete()
-            messages.success(request, f'Licenciatura "{nombre}" eliminada exitosamente')
+            nombre = carrera.nombre
+            carrera.delete()
+            messages.success(request, f'Carrera "{nombre}" eliminada exitosamente')
         except Exception as e:
-            messages.error(request, f'Error al eliminar la licenciatura: {str(e)}')
+            messages.error(request, f'Error al eliminar la carrera: {str(e)}')
     
-    return redirect('lista_licenciaturas')
+    return redirect('lista_carreras')
 
 @control_escolar_required
-def agregar_materia(request, licenciatura_id):
-    """Agregar una materia a una licenciatura"""
-    licenciatura = get_object_or_404(Licenciatura, id=licenciatura_id)
+def agregar_materia(request, carrera_id):
+    """Agregar una materia a una carrera"""
+    carrera = get_object_or_404(Carrera, id=carrera_id)
     
     if request.method == 'POST':
         try:
             nombre = request.POST['nombre']
             semestre = int(request.POST['semestre'])
-            unidad_id = request.POST['unidad_id']
-            creditos = int(request.POST.get('creditos', 8))
+            unidades_ids = request.POST.getlist('unidades')
+            creditos = float(request.POST.get('creditos', 8.0))
+            horas = int(request.POST.get('horas', 64))
             
-            unidad = get_object_or_404(Unidad, id=unidad_id, licenciatura=licenciatura)
+            # Validar que las unidades no estén ya asignadas
+            unidades_con_materia = []
+            for unidad_id in unidades_ids:
+                unidad = Unidad.objects.get(id=unidad_id)
+                if unidad.materias.exists():
+                    unidades_con_materia.append(unidad.codigo)
+            
+            if unidades_con_materia:
+                messages.error(request, f'Las siguientes unidades ya están asignadas: {", ".join(unidades_con_materia)}')
+                return redirect('detalle_carrera', carrera_id=carrera_id)
             
             # Crear la materia
             materia = Materia.objects.create(
-                licenciatura=licenciatura,
-                unidad=unidad,
+                carrera=carrera,
                 nombre=nombre,
                 semestre=semestre,
-                creditos=creditos
+                creditos=creditos,
+                horas=horas
             )
+            
+            # Asignar las unidades seleccionadas
+            if unidades_ids:
+                unidades = Unidad.objects.filter(id__in=unidades_ids, carrera=carrera)
+                materia.unidades.set(unidades)
             
             messages.success(request, f'Materia "{nombre}" agregada exitosamente')
             
         except Exception as e:
             messages.error(request, f'Error al agregar la materia: {str(e)}')
     
-    return redirect('detalle_licenciatura', licenciatura_id=licenciatura_id)
+    return redirect('detalle_carrera', carrera_id=carrera_id)
 
 @control_escolar_required
 def eliminar_materia(request, materia_id):
     """Eliminar una materia"""
     materia = get_object_or_404(Materia, id=materia_id)
-    licenciatura_id = materia.licenciatura.id
+    carrera_id = materia.carrera.id
     
     if request.method == 'POST':
         try:
@@ -408,7 +417,7 @@ def eliminar_materia(request, materia_id):
         except Exception as e:
             messages.error(request, f'Error al eliminar la materia: {str(e)}')
     
-    return redirect('detalle_licenciatura', licenciatura_id=licenciatura_id)
+    return redirect('detalle_carrera', carrera_id=carrera_id)
 
 @control_escolar_required
 def editar_materia(request, materia_id):
@@ -417,19 +426,41 @@ def editar_materia(request, materia_id):
     
     if request.method == 'POST':
         try:
+            # Guardar las unidades actuales para comparar después
+            unidades_actuales = set(materia.unidades.values_list('id', flat=True))
+            
             materia.nombre = request.POST['nombre']
             materia.semestre = int(request.POST['semestre'])
-            materia.unidad_id = request.POST['unidad_id']
-            materia.creditos = int(request.POST.get('creditos', 8))
+            nuevas_unidades_ids = set(request.POST.getlist('unidades'))
+            materia.creditos = float(request.POST.get('creditos', 8.0))
+            materia.horas = int(request.POST.get('horas', 64))
             materia.activa = 'activa' in request.POST
             
+            # Validar que las nuevas unidades no estén ya asignadas a otras materias
+            unidades_a_agregar = nuevas_unidades_ids - unidades_actuales
+            unidades_con_materia = []
+            
+            for unidad_id in unidades_a_agregar:
+                unidad = Unidad.objects.get(id=unidad_id)
+                if unidad.materias.exclude(pk=materia.id).exists():
+                    unidades_con_materia.append(unidad.codigo)
+            
+            if unidades_con_materia:
+                messages.error(request, f'Las siguientes unidades ya están asignadas a otras materias: {", ".join(unidades_con_materia)}')
+                return redirect('detalle_carrera', carrera_id=materia.carrera.id)
+            
             materia.save()
+            
+            # Actualizar las unidades
+            if nuevas_unidades_ids:
+                unidades = Unidad.objects.filter(id__in=nuevas_unidades_ids, carrera=materia.carrera)
+                materia.unidades.set(unidades)
             
             messages.success(request, f'Materia "{materia.nombre}" actualizada exitosamente')
         except Exception as e:
             messages.error(request, f'Error al actualizar la materia: {str(e)}')
     
-    return redirect('detalle_licenciatura', licenciatura_id=materia.licenciatura.id)
+    return redirect('detalle_carrera', carrera_id=materia.carrera.id)
 
 @control_escolar_required
 def cambiar_estado_materia(request, materia_id):
@@ -446,17 +477,74 @@ def cambiar_estado_materia(request, materia_id):
         except Exception as e:
             messages.error(request, f'Error al cambiar el estado de la materia: {str(e)}')
     
-    return redirect('detalle_licenciatura', licenciatura_id=materia.licenciatura.id)
+    return redirect('detalle_carrera', carrera_id=materia.carrera.id)
 
 @control_escolar_required
 def obtener_datos_materia(request, materia_id):
     """Obtener datos de una materia para edición (AJAX)"""
+    try:
+        materia = get_object_or_404(Materia, id=materia_id)
+        
+        # Obtener IDs de las unidades asignadas a esta materia
+        unidades_ids = list(materia.unidades.values_list('id', flat=True))  # CAMBIADO: unidades en lugar de unidades_asignadas
+        
+        return JsonResponse({
+            'nombre': materia.nombre,
+            'semestre': materia.semestre,
+            'unidades_ids': unidades_ids,
+            'creditos': float(materia.creditos),
+            'horas': materia.horas,
+            'activa': materia.activa
+        })
+    except Exception as e:
+        # Log del error para debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error en obtener_datos_materia: {str(e)}")
+        
+        return JsonResponse({
+            'error': str(e)
+        }, status=500)
+    
+# evaluaciones/views.py (agregar temporalmente para debugging)
+@control_escolar_required
+def debug_materia(request, materia_id):
+    """Vista temporal para debugging"""
     materia = get_object_or_404(Materia, id=materia_id)
     
+    print("=== DEBUG MATERIA ===")
+    print(f"Materia: {materia.nombre}")
+    print(f"Unidades asignadas: {list(materia.unidades.values_list('id', 'codigo'))}")
+    print("=====================")
+    
     return JsonResponse({
-        'nombre': materia.nombre,
-        'semestre': materia.semestre,
-        'unidad_id': materia.unidad.id,
-        'creditos': materia.creditos,
-        'activa': materia.activa
+        'debug': 'ok',
+        'materia': materia.nombre,
+        'unidades': list(materia.unidades.values_list('id', flat=True))
     })
+
+@control_escolar_required
+def asignar_materias_unidades_sin_asignar(request, carrera_id):
+    """Asignar materias automáticamente a unidades sin asignar"""
+    carrera = get_object_or_404(Carrera, id=carrera_id)
+    
+    try:
+        unidades_sin_materia = Unidad.objects.filter(carrera=carrera, materias__isnull=True)
+        materias_sin_unidades = Materia.objects.filter(carrera=carrera, unidades__isnull=True)
+        
+        unidades_asignadas = 0
+        
+        for unidad in unidades_sin_materia:
+            # Buscar una materia sin unidades para esta unidad
+            materia_disponible = materias_sin_unidades.first()
+            if materia_disponible:
+                materia_disponible.unidades.add(unidad)
+                unidades_asignadas += 1
+                print(f"✅ Unidad {unidad.codigo} asignada a {materia_disponible.nombre}")
+        
+        messages.success(request, f'Se asignaron {unidades_asignadas} unidades a materias existentes')
+        
+    except Exception as e:
+        messages.error(request, f'Error al asignar materias: {str(e)}')
+    
+    return redirect('detalle_carrera', carrera_id=carrera_id)

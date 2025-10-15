@@ -1,0 +1,71 @@
+<!-- templates/core/403.html - CORREGIDO -->
+{% extends "base.html" %}
+
+{% block title %}Acceso Prohibido - BENUNE{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="card border-danger">
+                <div class="card-body py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-ban fa-5x text-danger mb-4"></i>
+                        <h1 class="display-4 text-danger">Acceso Prohibido</h1>
+                    </div>
+                    
+                    <div class="alert alert-warning mx-auto" style="max-width: 500px;">
+                        <h4 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No tienes permisos para acceder a esta página
+                        </h4>
+                        <p class="mb-0">
+                            {% if exception %}
+                                {{ exception }}
+                            {% else %}
+                                Tu tipo de usuario (<strong>{{ user.get_tipo_usuario_display }}</strong>) 
+                                no tiene los permisos necesarios para acceder a este módulo.
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div class="mt-4">
+                        <p class="text-muted mb-4">
+                            Si crees que esto es un error, contacta al administrador del sistema.
+                        </p>
+                        
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <a href="{% url 'dashboard' %}" class="btn btn-primary-custom">
+                                <i class="fas fa-home me-2"></i>Volver al Dashboard
+                            </a>
+                            
+                            <!-- Formulario para cerrar sesión (POST) -->
+                            <form method="post" action="{% url 'logout' %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-secondary">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Información de depuración (solo en desarrollo) -->
+                    {% if debug %}
+                    <div class="mt-5 p-3 bg-light rounded text-start">
+                        <h6 class="text-muted">Información de depuración:</h6>
+                        <ul class="list-unstyled small">
+                            <li><strong>Usuario:</strong> {{ user.username }}</li>
+                            <li><strong>Tipo de usuario:</strong> {{ user.tipo_usuario }}</li>
+                            <li><strong>URL solicitada:</strong> {{ request.path }}</li>
+                            {% if exception %}
+                            <li><strong>Excepción:</strong> {{ exception }}</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
