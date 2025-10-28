@@ -155,6 +155,38 @@
             </a>
             {% endif %}
         </div>
+
+        <div class="col-md-6 col-lg-4 col-xl-3 col-xxl-2">
+            {% if user.tipo_usuario == 'control_escolar' or user.tipo_usuario == 'directivo' %}
+            <a href="{% url 'user_list' %}" class="card-module-link">
+            {% endif %}
+                <div class="card card-module h-100 text-center border-0 {% if user.tipo_usuario != 'control_escolar' and user.tipo_usuario != 'directivo' %}module-disabled{% endif %}">
+                    <div class="card-header bg-warning text-white py-4 position-relative">
+                        <div class="module-icon-wrapper">
+                            <i class="fas fa-user-cog fa-2x"></i>
+                        </div>
+                        <div class="hover-effect"></div>
+                    </div>
+                    <div class="card-body p-4 pt-5">
+                        <h3 class="h5 card-title text-warning fw-bold mb-2">Gestión de Usuarios</h3>
+                        <p class="card-text small text-muted">{% if user.tipo_usuario == 'control_escolar' or user.tipo_usuario == 'directivo' %}Gestiona{% else %}Consulta{% endif %} los usuarios del sistema.</p>
+                    </div>
+                    <div class="card-footer bg-transparent border-0 pb-3 pt-0">
+                        {% if user.tipo_usuario == 'control_escolar' or user.tipo_usuario == 'directivo' %}
+                        <span class="btn btn-warning text-white btn-sm px-3">
+                            Gestionar <i class="fas fa-arrow-right ms-2"></i>
+                        </span>
+                        {% else %}
+                        <span class="badge bg-secondary py-2 px-3">
+                            <i class="fas fa-lock me-1"></i>Solo Administradores
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            {% if user.tipo_usuario == 'control_escolar' or user.tipo_usuario == 'directivo' %}
+            </a>
+            {% endif %}
+        </div>
     </div>
 </div>
 

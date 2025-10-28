@@ -1,4 +1,4 @@
-# config/urls.py - ACTUALIZAR EL LOGOUT
+# config/urls.py - ACTUALIZADO
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
@@ -10,7 +10,7 @@ urlpatterns = [
     # Administración de Django
     path('admin/', admin.site.urls),
     
-    # Página principal (redirige al dashboard si está autenticado, sino al login)
+    # Página principal
     path('', core_views.home_redirect, name='home'),
     
     # Autenticación simple
@@ -23,9 +23,10 @@ urlpatterns = [
     path('logout/', core_views.custom_logout, name='logout'),
     
     # Incluir URLs de las apps
-    path('', include('core.urls')),        # Dashboard
-    path('alumnos/', include('alumnos.urls')),      # Alumnos (solo control escolar)
-    path('constancias/', include('constancias.urls')),  # Constancias (solo control escolar)
+    path('', include('core.urls')),           # Dashboard
+    path('usuarios/', include('usuarios.urls')), # NUEVO: Gestión de usuarios
+    path('alumnos/', include('alumnos.urls')),    # Alumnos (solo control escolar)
+    path('constancias/', include('constancias.urls')), # Constancias (solo control escolar)
     path('evaluaciones/', include('evaluaciones.urls')), # Evaluaciones (solo control escolar)
 ]
 

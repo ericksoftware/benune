@@ -48,9 +48,9 @@ class MateriaAdmin(admin.ModelAdmin):
 
 @admin.register(Calificacion)
 class CalificacionAdmin(admin.ModelAdmin):
-    list_display = ['alumno', 'materia', 'calificacion', 'periodo', 'fecha_registro']
-    list_filter = ['periodo', 'materia__carrera', 'materia__semestre']
-    search_fields = ['alumno__matricula', 'alumno__nombre', 'materia__nombre']
+    list_display = ['alumno', 'unidad', 'calificacion', 'periodo', 'fecha_registro']  # CAMBIAR: materia por unidad
+    list_filter = ['periodo', 'unidad__carrera']  # CAMBIAR: filtros por unidad
+    search_fields = ['alumno__matricula', 'alumno__nombre', 'unidad__codigo']  # CAMBIAR: buscar por unidad
     readonly_fields = ['fecha_registro', 'fecha_actualizacion']
     ordering = ['-fecha_registro']
 

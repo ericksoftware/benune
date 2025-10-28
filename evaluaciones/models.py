@@ -148,8 +148,8 @@ class Materia(models.Model):
         super().save(*args, **kwargs)
 
 class Calificacion(models.Model):
-    alumno = models.ForeignKey('alumnos.Alumno', on_delete=models.CASCADE)  # Usar cadena para referencia
-    materia = models.ForeignKey(Materia, on_delete=models.CASCADE)
+    alumno = models.ForeignKey('alumnos.Alumno', on_delete=models.CASCADE)
+    unidad = models.ForeignKey(Unidad, on_delete=models.CASCADE)  # Por unidad, no por materia
     calificacion = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
     periodo = models.CharField(max_length=20)
     fecha_registro = models.DateTimeField(auto_now_add=True)
@@ -158,12 +158,12 @@ class Calificacion(models.Model):
     class Meta:
         verbose_name = 'Calificación'
         verbose_name_plural = 'Calificaciones'
-        unique_together = ['alumno', 'materia', 'periodo']
-        ordering = ['alumno', 'materia__semestre', 'materia__nombre']
+        unique_together = ['alumno', 'unidad', 'periodo']
+        ordering = ['alumno', 'unidad__numero']
     
     def __str__(self):
         calif = self.calificacion if self.calificacion else "N/A"
-        return f"{self.alumno.matricula} - {self.materia.nombre}: {calif}"
+        return f"{self.alumno.matricula} - {self.unidad.codigo}: {calif}"
 
 class PromedioPeriodo(models.Model):
     alumno = models.ForeignKey('alumnos.Alumno', on_delete=models.CASCADE)  # Usar cadena para referencia

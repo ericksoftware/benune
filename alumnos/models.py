@@ -94,7 +94,6 @@ class Alumno(models.Model):
         verbose_name = 'Alumno'
         verbose_name_plural = 'Alumnos'
         ordering = ['matricula', 'apellido_paterno', 'apellido_materno', 'nombre']
-        # SIN constraints - la validación se hará en clean()
     
     def __str__(self):
         return f"{self.matricula} - {self.nombre_completo()}"
@@ -103,12 +102,13 @@ class Alumno(models.Model):
         return f"{self.nombre} {self.apellido_paterno} {self.apellido_materno}"
     
     def clean(self):
-        """Validación adicional del modelo"""
+        """Validación CORREGIDA - buscando en todos los alumnos"""
         from django.core.exceptions import ValidationError
+        
+        print(f"🔍 EJECUTANDO CLEAN() - Matrícula: {self.matricula}")
         
         # Validar que matrículas diferentes de "PENDIENTE" sean únicas
         if self.matricula != 'PENDIENTE':
-            from django.db.models import Q
             alumnos_con_misma_matricula = Alumno.objects.filter(
                 matricula=self.matricula
             ).exclude(pk=self.pk)
@@ -119,22 +119,84 @@ class Alumno(models.Model):
                     'matricula': f'La matrícula "{self.matricula}" ya le pertenece al alumno: {alumno_existente.nombre_completo()}'
                 })
         
-        # Validar email institucional
+        # Para campos cifrados, necesitamos verificar TODOS los registros
+        if self.curp and self.curp != 'N/A':
+            # Buscar en TODOS los alumnos para comparar CURPs descifradas
+            for alumno_existente in Alumno.objects.exclude(pk=self.pk):
+                if alumno_existente.curp == self.curp:  # Esto compara los valores DESCIFRADOS
+                    raise ValidationError({
+                        'curp': f'La CURP "{self.curp}" ya le pertenece al alumno: {alumno_existente.nombre_completo()}'
+                    })
+        
+        if self.rfc and self.rfc != 'N/A':
+            # Buscar en TODOS los alumnos para comparar RFCs descifrados
+            for alumno_existente in Alumno.objects.exclude(pk=self.pk):
+                if alumno_existente.rfc == self.rfc:  # Esto compara los valores DESCIFRADOS
+                    raise ValidationError({
+                        'rfc': f'El RFC "{self.rfc}" ya le pertenece al alumno: {alumno_existente.nombre_completo()}'
+                    })
+        
         if self.email_institucional and self.email_institucional not in ['N/A', 'Pendiente']:
             if not self.email_institucional.endswith('@edubc.mx'):
                 raise ValidationError({
                     'email_institucional': 'El correo institucional debe terminar con @edubc.mx'
                 })
+            
+            # Buscar en TODOS los alumnos para comparar emails descifrados
+            for alumno_existente in Alumno.objects.exclude(pk=self.pk):
+                if alumno_existente.email_institucional == self.email_institucional:
+                    raise ValidationError({
+                        'email_institucional': f'El correo institucional "{self.email_institucional}" ya le pertenece al alumno: {alumno_existente.nombre_completo()}'
+                    })
     
-    # def save(self, *args, **kwargs):
-    #     # Ejecutar validaciones antes de guardar
-    #     self.full_clean()
-    #     super().save(*args, **kwargs)
-    
-    def get_calificaciones(self):
-        """Obtener todas las calificaciones del alumno"""
-        from evaluaciones.models import Calificacion
-        return Calificacion.objects.filter(alumno=self)
+    def save(self, *args, **kwargs):
+        """Método save CORREGIDO para forzar validaciones"""
+        print("💾 INICIANDO SAVE() DEL ALUMNO")
+        
+        # FORZAR la ejecución de validaciones
+        try:
+            self.full_clean()
+            print("✅ VALIDACIONES PASADAS")
+        except ValidationError as e:
+            print(f"❌ ERROR DE VALIDACIÓN: {e}")
+            raise e
+        
+        # ¿Es un nuevo alumno?
+        es_nuevo = self.pk is None
+        
+        # Guardar el alumno
+        super().save(*args, **kwargs)
+        print("✅ ALUMNO GUARDADO EN BASE DE DATOS")
+        
+        # Si es nuevo alumno, crear usuario Django automáticamente
+        if es_nuevo:
+            self.crear_usuario_django()
+
+    def crear_usuario_django(self):
+        """Crear usuario Django automáticamente para el alumno"""
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        
+        # Generar username único para el alumno
+        username = f"alumno_{self.matricula if self.matricula != 'PENDIENTE' else self.id}"
+        
+        # Verificar si el usuario ya existe
+        if not User.objects.filter(username=username).exists():
+            try:
+                # Crear usuario con email y password
+                user = User.objects.create_user(
+                    username=username,
+                    email=self.email_institucional if self.email_institucional not in ['N/A', 'Pendiente'] else f"{username}@edubc.mx",
+                    password=self.password_email_institucional,
+                    tipo_usuario='alumno',
+                    first_name=self.nombre,
+                    last_name=f"{self.apellido_paterno} {self.apellido_materno}"
+                )
+                print(f"✅ Usuario Django creado automáticamente: {username}")
+                return user
+            except Exception as e:
+                print(f"❌ Error creando usuario Django: {e}")
+        return None
     
     def save(self, *args, **kwargs):
         # Ejecutar validaciones antes de guardar
@@ -175,5 +237,3 @@ class Alumno(models.Model):
             except Exception as e:
                 print(f"❌ Error creando usuario Django: {e}")
         return None
-    
-    

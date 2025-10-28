@@ -33,47 +33,41 @@ def student_list(request):
     }
     return render(request, 'alumnos/student_list.html', context)
 
-# alumnos/views.py - Agregar debug
 @control_escolar_required
 def student_detail(request, student_id):
     """Detalle de un alumno específico - Solo control escolar"""
     alumno = get_object_or_404(Alumno, id=student_id)
-    calificaciones = Calificacion.objects.filter(alumno=alumno).select_related('materia')
+    calificaciones = Calificacion.objects.filter(alumno=alumno).select_related('unidad', 'unidad__carrera')
     
     # DEBUG: Verificar calificaciones cargadas
     print(f"🔍 DEBUG STUDENT_DETAIL - Alumno: {alumno.nombre_completo()}")
     print(f"🔍 DEBUG STUDENT_DETAIL - Calificaciones cargadas: {calificaciones.count()}")
     for calif in calificaciones:
-        print(f"🔍 DEBUG STUDENT_DETAIL - {calif.materia.nombre}: {calif.calificacion}")
+        print(f"🔍 DEBUG STUDENT_DETAIL - {calif.unidad.codigo}: {calif.calificacion}")
     
-    # Obtener materias de la carrera del alumno
-    materias_carrera = []
+    # Obtener unidades de la carrera del alumno
     unidades_carrera = []
-    materias_con_unidad_count = 0
-    unidades_sin_materia_count = 0
+    materias_carrera = []
     materias_calificadas = 0
     materias_por_calificar = 0
     promedio_general = None
     
     if alumno.carrera:
-        # Obtener TODAS las materias de la carrera
+        # Obtener TODAS las unidades de la carrera
+        unidades_carrera = Unidad.objects.filter(
+            carrera=alumno.carrera
+        ).prefetch_related('materias').order_by('numero')
+        
+        # Obtener TODAS las materias de la carrera (para mostrar en el modal)
         materias_carrera = Materia.objects.filter(
             carrera=alumno.carrera
         ).prefetch_related('unidades').order_by('semestre', 'nombre')
         
-        # Obtener TODAS las unidades de la carrera
-        unidades_carrera = Unidad.objects.filter(
-            carrera=alumno.carrera
-        ).order_by('numero')
-        
-        # Calcular estadísticas
-        materias_con_unidad_count = sum(1 for materia in materias_carrera if materia.unidades.exists())
-        unidades_sin_materia_count = sum(1 for unidad in unidades_carrera if not unidad.materias.exists())
-        
+        # Calcular estadísticas por UNIDADES
         materias_calificadas = calificaciones.count()
-        materias_por_calificar = materias_carrera.count() - materias_calificadas
+        materias_por_calificar = unidades_carrera.count() - materias_calificadas
         
-        # Promedio general
+        # Promedio general (de todas las unidades calificadas)
         if calificaciones.exists():
             suma_calificaciones = sum(calif.calificacion for calif in calificaciones if calif.calificacion)
             promedio_general = round(suma_calificaciones / calificaciones.count(), 2)
@@ -81,10 +75,8 @@ def student_detail(request, student_id):
     context = {
         'alumno': alumno,
         'calificaciones': calificaciones,
-        'materias_carrera': materias_carrera,
         'unidades_carrera': unidades_carrera,
-        'materias_con_unidad_count': materias_con_unidad_count,
-        'unidades_sin_materia_count': unidades_sin_materia_count,
+        'materias_carrera': materias_carrera,
         'materias_calificadas': materias_calificadas,
         'materias_por_calificar': materias_por_calificar,
         'promedio_general': promedio_general,
@@ -99,23 +91,62 @@ def student_create(request):
     
     if request.method == 'POST':
         try:
-            # Obtener matrícula
+            # Obtener datos del formulario
             matricula = request.POST.get('matricula', 'PENDIENTE').strip().upper()
+            curp = request.POST.get('curp', 'N/A').strip().upper()
+            rfc = request.POST.get('rfc', 'N/A').strip().upper()
+            email_institucional = request.POST.get('email_institucional', 'Pendiente').strip()
             
-            # Validar que matrículas diferentes de "PENDIENTE" sean únicas
+            # Validaciones de duplicados - BUSCANDO EN TODOS LOS REGISTROS
+            errores = []
+            
+            # Validar matrícula (esto funciona porque no está cifrada)
             if matricula != 'PENDIENTE':
                 if Alumno.objects.filter(matricula=matricula).exists():
                     alumno_existente = Alumno.objects.get(matricula=matricula)
-                    messages.error(request, f'La matrícula "{matricula}" ya le pertenece al alumno: {alumno_existente.nombre_completo()}')
-                    return redirect('student_create')
+                    errores.append(f'La matrícula "{matricula}" ya le pertenece al alumno: {alumno_existente.nombre_completo()}')
             
-            # Crear nuevo alumno
+            # Para campos cifrados, buscar en TODOS los registros
+            if curp != 'N/A':
+                for alumno_existente in Alumno.objects.all():
+                    if alumno_existente.curp == curp:  # Comparar valores descifrados
+                        errores.append(f'La CURP "{curp}" ya le pertenece al alumno: {alumno_existente.nombre_completo()}')
+                        break
+            
+            if rfc != 'N/A':
+                for alumno_existente in Alumno.objects.all():
+                    if alumno_existente.rfc == rfc:  # Comparar valores descifrados
+                        errores.append(f'El RFC "{rfc}" ya le pertenece al alumno: {alumno_existente.nombre_completo()}')
+                        break
+            
+            if email_institucional not in ['Pendiente', 'N/A']:
+                if not email_institucional.endswith('@edubc.mx'):
+                    errores.append('El correo institucional debe terminar con @edubc.mx')
+                else:
+                    for alumno_existente in Alumno.objects.all():
+                        if alumno_existente.email_institucional == email_institucional:
+                            errores.append(f'El correo institucional "{email_institucional}" ya le pertenece al alumno: {alumno_existente.nombre_completo()}')
+                            break
+            
+            # Si hay errores, mostrar todos
+            if errores:
+                for error in errores:
+                    messages.error(request, error)
+                context = {
+                    'carreras': carreras,
+                    'page_title': 'Registrar Nuevo Alumno',
+                    'modo': 'crear',
+                    'alumno': request.POST
+                }
+                return render(request, 'alumnos/student_form.html', context)
+            
+            # Crear nuevo alumno si no hay errores
             alumno = Alumno()
             
             # Información básica
             alumno.matricula = matricula
-            alumno.curp = request.POST.get('curp', 'N/A').strip().upper()
-            alumno.rfc = request.POST.get('rfc', 'N/A').strip().upper()
+            alumno.curp = curp
+            alumno.rfc = rfc
             alumno.nombre = request.POST.get('nombre', 'N/A').strip()
             alumno.apellido_paterno = request.POST.get('apellido_paterno', 'N/A').strip()
             alumno.apellido_materno = request.POST.get('apellido_materno', 'N/A').strip()
@@ -151,22 +182,51 @@ def student_create(request):
             alumno.plan = request.POST.get('plan', 2023)
             
             # Información de contacto
-            alumno.email_institucional = request.POST.get('email_institucional', 'Pendiente')
+            alumno.email_institucional = email_institucional
             alumno.password_email_institucional = request.POST.get('password_email_institucional', 'N/A')
-            alumno.email_personal = request.POST.get('email_personal', 'N/A')
+            alumno.email_personal = request.POST.get('email_personal', 'N/A').strip()
             alumno.telefono = request.POST.get('telefono', 'N/A')
             
             # Estado
             alumno.estado = request.POST.get('estado', 'activo')
             
+            # GUARDAR - esto ejecutará las validaciones del modelo
             alumno.save()
             
             messages.success(request, f'Alumno {alumno.nombre_completo()} creado exitosamente')
+            print("✅ ALUMNO CREADO EXITOSAMENTE")
             return redirect('student_list')
             
+        except ValidationError as e:
+            print(f"❌ ERROR DE VALIDACIÓN EN VISTA: {e}")
+            # Capturar errores de validación del modelo
+            for field, errors in e.error_dict.items():
+                for error in errors:
+                    messages.error(request, f'Error en {field}: {error}')
+            
+            # Volver a mostrar el formulario con los datos
+            context = {
+                'carreras': carreras,
+                'page_title': 'Registrar Nuevo Alumno',
+                'modo': 'crear',
+                'alumno': request.POST  # Pasar los datos del POST
+            }
+            return render(request, 'alumnos/student_form.html', context)
+            
         except Exception as e:
+            print(f"❌ ERROR GENERAL EN VISTA: {e}")
             messages.error(request, f'Error al crear el alumno: {str(e)}')
+            
+            # Volver a mostrar el formulario con los datos
+            context = {
+                'carreras': carreras,
+                'page_title': 'Registrar Nuevo Alumno',
+                'modo': 'crear',
+                'alumno': request.POST  # Pasar los datos del POST
+            }
+            return render(request, 'alumnos/student_form.html', context)
     
+    # GET request - mostrar formulario vacío
     context = {
         'carreras': carreras,
         'page_title': 'Registrar Nuevo Alumno',
@@ -182,22 +242,55 @@ def student_edit(request, student_id):
     
     if request.method == 'POST':
         try:
-            # Obtener nueva matrícula
+            # Obtener nuevos datos del formulario
             nueva_matricula = request.POST.get('matricula', 'PENDIENTE').strip().upper()
+            nueva_curp = request.POST.get('curp', 'N/A').strip().upper()
+            nuevo_rfc = request.POST.get('rfc', 'N/A').strip().upper()
+            nuevo_email_institucional = request.POST.get('email_institucional', 'Pendiente').strip()
             
-            # Validar que matrículas diferentes de "PENDIENTE" sean únicas
+            # Validaciones de duplicados - BUSCANDO EN TODOS LOS REGISTROS
+            errores = []
+            
+            # Validar matrícula
             if (nueva_matricula != 'PENDIENTE' and 
                 nueva_matricula != alumno.matricula):
                 if Alumno.objects.filter(matricula=nueva_matricula).exists():
                     alumno_existente = Alumno.objects.get(matricula=nueva_matricula)
-                    messages.error(request, f'La matrícula "{nueva_matricula}" ya le pertenece al alumno: {alumno_existente.nombre_completo()}')
-                    return redirect('student_edit', student_id=student_id)
+                    errores.append(f'La matrícula "{nueva_matricula}" ya le pertenece al alumno: {alumno_existente.nombre_completo()}')
             
-            # Actualizar información básica
+            # Para campos cifrados, buscar en TODOS los registros (excepto el actual)
+            if nueva_curp != 'N/A' and nueva_curp != alumno.curp:
+                for alumno_existente in Alumno.objects.exclude(pk=alumno.pk):
+                    if alumno_existente.curp == nueva_curp:
+                        errores.append(f'La CURP "{nueva_curp}" ya le pertenece al alumno: {alumno_existente.nombre_completo()}')
+                        break
+            
+            if nuevo_rfc != 'N/A' and nuevo_rfc != alumno.rfc:
+                for alumno_existente in Alumno.objects.exclude(pk=alumno.pk):
+                    if alumno_existente.rfc == nuevo_rfc:
+                        errores.append(f'El RFC "{nuevo_rfc}" ya le pertenece al alumno: {alumno_existente.nombre_completo()}')
+                        break
+            
+            if (nuevo_email_institucional not in ['Pendiente', 'N/A'] and 
+                nuevo_email_institucional != alumno.email_institucional):
+                if not nuevo_email_institucional.endswith('@edubc.mx'):
+                    errores.append('El correo institucional debe terminar con @edubc.mx')
+                else:
+                    for alumno_existente in Alumno.objects.exclude(pk=alumno.pk):
+                        if alumno_existente.email_institucional == nuevo_email_institucional:
+                            errores.append(f'El correo institucional "{nuevo_email_institucional}" ya le pertenece al alumno: {alumno_existente.nombre_completo()}')
+                            break
+            
+            # Si hay errores, mostrar todos
+            if errores:
+                for error in errores:
+                    messages.error(request, error)
+                return redirect('student_edit', student_id=student_id)
+            
+            # Actualizar información
             alumno.matricula = nueva_matricula
-            alumno.curp = request.POST.get('curp', 'N/A').strip().upper()
-            alumno.rfc = request.POST.get('rfc', 'N/A').strip().upper()
-            alumno.nombre = request.POST.get('nombre', 'N/A').strip()
+            alumno.curp = nueva_curp
+            alumno.rfc = nuevo_rfc
             alumno.apellido_paterno = request.POST.get('apellido_paterno', 'N/A').strip()
             alumno.apellido_materno = request.POST.get('apellido_materno', 'N/A').strip()
             
@@ -242,7 +335,7 @@ def student_edit(request, student_id):
             alumno.plan = request.POST.get('plan', 2023)
             
             # Información de contacto
-            alumno.email_institucional = request.POST.get('email_institucional', 'Pendiente').strip()
+            alumno.email_institucional = nuevo_email_institucional
             alumno.password_email_institucional = request.POST.get('password_email_institucional', 'N/A')
             alumno.email_personal = request.POST.get('email_personal', 'N/A').strip()
             alumno.telefono = request.POST.get('telefono', 'N/A')
@@ -250,17 +343,21 @@ def student_edit(request, student_id):
             # Estado
             alumno.estado = request.POST.get('estado', 'activo')
             
+            # GUARDAR - esto ejecutará las validaciones del modelo
             alumno.save()
             
             messages.success(request, f'Alumno {alumno.nombre_completo()} actualizado exitosamente')
+            print("✅ ALUMNO ACTUALIZADO EXITOSAMENTE")
             return redirect('student_detail', student_id=alumno.id)
             
         except ValidationError as e:
+            print(f"❌ ERROR DE VALIDACIÓN EN VISTA: {e}")
             # Capturar errores de validación del modelo
             for field, errors in e.error_dict.items():
                 for error in errors:
                     messages.error(request, f'Error en {field}: {error}')
         except Exception as e:
+            print(f"❌ ERROR GENERAL EN VISTA: {e}")
             messages.error(request, f'Error al actualizar el alumno: {str(e)}')
     
     context = {
@@ -293,52 +390,52 @@ def student_delete(request, student_id):
 
 @control_escolar_required
 def student_update_grades(request, student_id):
-    """Actualizar calificaciones del alumno - Solo control escolar"""
+    """Actualizar calificaciones del alumno por UNIDAD - Solo control escolar"""
     alumno = get_object_or_404(Alumno, id=student_id)
     
     if request.method == 'POST':
         try:
-            print(f"🔍 DEBUG - Procesando calificaciones para alumno: {alumno.nombre_completo()}")
+            print(f"🔍 DEBUG - Procesando calificaciones por UNIDAD para alumno: {alumno.nombre_completo()}")
             
             # Obtener TODOS los campos del POST que empiecen con "calificacion_"
             campos_calificacion = [key for key in request.POST.keys() if key.startswith('calificacion_')]
             print(f"🔍 DEBUG - Campos encontrados en POST: {len(campos_calificacion)}")
             
             for campo in campos_calificacion:
-                # Extraer el ID de la materia del nombre del campo
-                materia_id = campo.replace('calificacion_', '')
+                # Extraer el ID de la UNIDAD del nombre del campo
+                unidad_id = campo.replace('calificacion_', '')
                 calificacion_valor = request.POST.get(campo, '').strip()
                 
                 print(f"🔍 DEBUG - Procesando: {campo} = '{calificacion_valor}'")
                 
                 try:
-                    materia = Materia.objects.get(id=materia_id)
+                    unidad = Unidad.objects.get(id=unidad_id)
                     
                     # Si el campo está vacío o es "N/A", eliminar la calificación existente
                     if not calificacion_valor or calificacion_valor.lower() == 'n/a':
                         deleted_count, _ = Calificacion.objects.filter(
                             alumno=alumno, 
-                            materia=materia
+                            unidad=unidad
                         ).delete()
-                        print(f"🔍 DEBUG - Calificación eliminada para {materia.nombre}: {deleted_count}")
+                        print(f"🔍 DEBUG - Calificación eliminada para {unidad.codigo}: {deleted_count}")
                     else:
                         # Convertir a decimal y guardar/actualizar
                         calificacion_decimal = float(calificacion_valor)
                         
-                        # Crear o actualizar calificación
+                        # Crear o actualizar calificación por UNIDAD
                         calificacion, created = Calificacion.objects.update_or_create(
                             alumno=alumno,
-                            materia=materia,
+                            unidad=unidad,
                             defaults={
                                 'calificacion': calificacion_decimal,
                                 'periodo': f"2025-{alumno.semestre_actual}"
                             }
                         )
                         
-                        print(f"🔍 DEBUG - Calificación {'CREADA' if created else 'ACTUALIZADA'} para {materia.nombre}: {calificacion.calificacion}")
+                        print(f"🔍 DEBUG - Calificación {'CREADA' if created else 'ACTUALIZADA'} para {unidad.codigo}: {calificacion.calificacion}")
                         
-                except Materia.DoesNotExist:
-                    print(f"❌ ERROR - Materia con ID {materia_id} no existe")
+                except Unidad.DoesNotExist:
+                    print(f"❌ ERROR - Unidad con ID {unidad_id} no existe")
                     continue
                 except ValueError as e:
                     print(f"❌ ERROR en valor: {e}")
@@ -348,7 +445,7 @@ def student_update_grades(request, student_id):
             calificaciones_despues = Calificacion.objects.filter(alumno=alumno)
             print(f"🔍 DEBUG - Calificaciones después de guardar: {calificaciones_despues.count()}")
             for calif in calificaciones_despues:
-                print(f"🔍 DEBUG - Calificación guardada: {calif.materia.nombre} = {calif.calificacion}")
+                print(f"🔍 DEBUG - Calificación guardada: {calif.unidad.codigo} = {calif.calificacion}")
             
             messages.success(request, f'Calificaciones de {alumno.nombre_completo()} actualizadas exitosamente')
             

@@ -50,13 +50,22 @@ Carrera
 
 Usuarios
 - Numero (id primaria)
-- Nombre (String)
+- Matricula (String Use "PENDIENTE" si aún no tiene matrícula asignada)
+- Curp (String)
+- RFC (String)
+- Nombre(s) (String)
+- Apellido paterno (String)
+- Apellido materno (String)
+- Municipio/Estado de nacimiento (String)
+- Fecha de nacimiento (Calendario)
+- Sexo (Seleccion 'Hombre/Mujer/Otro')
 - Tipo de usuario (Seleccion 'Docente/Control escolar/Directivo')
-- Correo institucional (String con formato de correo)
+- Correo institucional (String con formato de correo Debe terminar con @edubc.mx o ser "Pendiente" si no tiene correo asignado)
 - Contraseña de correo institucional (String)
 - Correo particual (String con formato de correo)
 - Turno (Seleccion 'Matutino/Vespestino/Ambos Turnos')
 - Numero de celular (String con formato de numero a 10 digitos)
+- Estado (Seleccion 'Activo/Inactivo')
 
 Todo esto debe ser editable en todo momento, solo la informacion sensible debe ser cifrada, lo demas no
 
