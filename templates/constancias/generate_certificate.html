@@ -27,46 +27,32 @@
                 
                 <div class="row mb-4">
                     <div class="col-md-6">
-                        <h4 class="text-primary-custom mb-3">Datos del Alumno</h4>
-                        
                         <div class="mb-3">
                             <label for="alumno" class="form-label">Seleccionar Alumno *</label>
                             <select class="form-select" id="alumno" name="alumno" required>
                                 <option value="">-- Seleccione un alumno --</option>
-                                <!-- Aquí irían las opciones de alumnos -->
-                                <option value="1">AGUILAR MUNGUIA, ELLEN LIVIERE</option>
-                                <option value="2">AGUIRRE VILLANUEVA, ARMANDO MAURICIO</option>
-                                <option value="3">ALVAREZ GALLEGO, JURIDIA VANESSA</option>
+                                {% for alumno in alumnos %}
+                                <option value="{{ alumno.id }}">
+                                    {{ alumno.nombre_completo }} - {{ alumno.matricula }}
+                                </option>
+                                {% endfor %}
                             </select>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="tipo_constancia" class="form-label">Tipo de Constancia *</label>
-                            <select class="form-select" id="tipo_constancia" name="tipo_constancia" required>
-                                <option value="">-- Seleccione el tipo --</option>
-                                <option value="estudios">Constancia de Estudios</option>
-                                <option value="calificaciones">Constancia de Calificaciones</option>
-                                <option value="regular">Constancia de Alumno Regular</option>
-                            </select>
+                            <div class="form-text">Seleccione el alumno para generar la constancia</div>
                         </div>
                     </div>
                     
                     <div class="col-md-6">
-                        <h4 class="text-primary-custom mb-3">Información Adicional</h4>
-                        
                         <div class="mb-3">
                             <label for="fecha_emision" class="form-label">Fecha de Emisión *</label>
                             <input type="date" class="form-control" id="fecha_emision" name="fecha_emision" 
                                    value="{% now 'Y-m-d' %}" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="observaciones" class="form-label">Observaciones</label>
-                            <textarea class="form-control" id="observaciones" name="observaciones" 
-                                      rows="3" placeholder="Observaciones adicionales..."></textarea>
+                            <div class="form-text">Fecha en que se emite la constancia</div>
                         </div>
                     </div>
                 </div>
+                
+                <!-- Campo oculto para tipo de constancia (siempre estudios) -->
+                <input type="hidden" name="tipo_constancia" value="estudios">
                 
                 <div class="row">
                     <div class="col-12">
@@ -84,4 +70,70 @@
         </div>
     </div>
 </div>
+
+<style>
+.form-label {
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.form-select, .form-control {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.form-select:focus, .form-control:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.2rem rgba(131, 16, 18, 0.25);
+}
+
+.card {
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    border: none;
+}
+
+.card-body {
+    padding: 2rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mejorar la experiencia del usuario
+    const alumnoSelect = document.getElementById('alumno');
+    const fechaInput = document.getElementById('fecha_emision');
+    
+    // Agregar búsqueda en tiempo real si hay muchos alumnos
+    if (alumnoSelect) {
+        const originalOptions = Array.from(alumnoSelect.options);
+        
+        // Crear funcionalidad de búsqueda si hay más de 10 alumnos
+        if (originalOptions.length > 10) {
+            const searchContainer = document.createElement('div');
+            searchContainer.className = 'mb-2';
+            searchContainer.innerHTML = `
+                <input type="text" class="form-control" id="alumnoSearch" placeholder="Buscar alumno...">
+            `;
+            alumnoSelect.parentNode.insertBefore(searchContainer, alumnoSelect);
+            
+            const searchInput = document.getElementById('alumnoSearch');
+            searchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                
+                // Limpiar select
+                alumnoSelect.innerHTML = '<option value="">-- Seleccione un alumno --</option>';
+                
+                // Filtrar opciones
+                originalOptions.forEach(option => {
+                    if (option.value && option.text.toLowerCase().includes(searchTerm)) {
+                        alumnoSelect.appendChild(option.cloneNode(true));
+                    }
+                });
+            });
+        }
+    }
+});
+</script>
 {% endblock %}

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        @page {
+            size: letter;
+            margin: 2cm;
+        }
+        body {
+            font-family: 'Times New Roman', serif;
+            line-height: 1.6;
+            color: #000;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2cm;
+        }
+        .title {
+            font-size: 16pt;
+            font-weight: bold;
+            margin-bottom: 1cm;
+            text-decoration: underline;
+        }
+        .content {
+            text-align: justify;
+            margin-bottom: 1.5cm;
+        }
+        .signatures {
+            margin-top: 3cm;
+        }
+        .signature-line {
+            border-top: 1px solid #000;
+            width: 60%;
+            margin: 0.5cm 0;
+        }
+        .footer {
+            margin-top: 2cm;
+            text-align: center;
+            font-size: 10pt;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>BENEMÉRITA ESCUELA NORMAL URBANA NOCTURNA DEL ESTADO</h2>
+        <h3>"ING. JOSÉ G. VALENZUELA"</h3>
+        <p>Clave: 02ENL0004Y</p>
+    </div>
+    
+    <div class="title">
+        CONSTANCIA DE ESTUDIOS
+    </div>
+    
+    <div class="content">
+        <p>El que suscribe, Director(a) de la Benemérita Escuela Normal Urbana Nocturna del Estado "Ing. José G. Valenzuela", con clave 02ENL0004Y, hace constar que:</p>
+        
+        <p style="text-align: center; font-weight: bold; margin: 1cm 0;">
+            {{ constancia.alumno.nombre_completo }}
+        </p>
+        
+        <p>Con número de matrícula <strong>{{ constancia.alumno.matricula }}</strong>, CURP <strong>{{ constancia.alumno.curp }}</strong>, es alumno(a) regular de esta institución y se encuentra inscrito(a) en el <strong>{{ constancia.alumno.semestre_actual }}° semestre</strong> de la <strong>{{ constancia.alumno.carrera.nombre }}</strong> en el turno <strong>{{ constancia.alumno.get_turno_display }}</strong>.</p>
+        
+        <p>Se extiende la presente constancia para los fines que al interesado(a) convengan, en la ciudad de Mexicali, Baja California, a los {{ constancia.fecha_emision|date:"d" }} días del mes de {{ constancia.fecha_emision|date:"F" }} del {{ constancia.fecha_emision|date:"Y" }}.</p>
+    </div>
+    
+    <div class="signatures">
+        <div style="float: left; width: 45%; text-align: center;">
+            <div class="signature-line"></div>
+            <p>Vo.Bo. Subdirección Académica</p>
+        </div>
+        
+        <div style="float: right; width: 45%; text-align: center;">
+            <div class="signature-line"></div>
+            <p>Director(a) de la Institución</p>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+    
+    <div class="footer">
+        <p>AV. JUAN ESCUTIA Y RIO SAN LORENZO S/N COL. PRO-HOGAR, MEXICALI, B.C. C.P. 21260</p>
+        <p>TEL: (686) 552-XXXX</p>
+    </div>
+</body>
+</html>

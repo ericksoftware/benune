@@ -24,6 +24,7 @@
 
     <div class="card">
         <div class="card-body">
+            {% if constancias %}
             <div class="table-responsive">
                 <table class="table table-striped table-hover">
                     <thead class="table-dark">
@@ -37,13 +38,50 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Aquí iría el loop de constancias -->
+                        {% for constancia in constancias %}
                         <tr>
-                            <td colspan="6" class="text-center">No hay constancias generadas</td>
+                            <td>{{ constancia.alumno.nombre_completo }}</td>
+                            <td>{{ constancia.alumno.matricula }}</td>
+                            <td>{{ constancia.fecha_generacion|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <span class="badge bg-primary-custom">{{ constancia.get_tipo_constancia_display }}</span>
+                            </td>
+                            <td>
+                                <span class="badge {% if constancia.estado == 'generada' %}bg-success{% elif constancia.estado == 'revisada' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                    {{ constancia.get_estado_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'view_certificate' constancia.id %}" class="btn btn-outline-primary" title="Ver">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if constancia.archivo_pdf %}
+                                    <a href="{% url 'download_certificate' constancia.id %}" class="btn btn-outline-success" title="Descargar PDF">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    {% else %}
+                                    <button class="btn btn-outline-secondary" disabled title="PDF no disponible">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
                         </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-file-pdf fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No hay constancias generadas</h4>
+                <p class="text-muted">Comienza generando tu primera constancia de estudios.</p>
+                <a href="{% url 'generate_certificate' %}" class="btn btn-primary-custom">
+                    <i class="fas fa-plus me-2"></i>Generar Primera Constancia
+                </a>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
